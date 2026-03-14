@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase'
 import { Navbar } from '@/components/navbar'
 import { JobCard } from '@/components/job-card'
 import { Button } from '@/components/ui/button'
@@ -14,91 +15,87 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Search, Filter, X } from 'lucide-react'
+import { Search, X } from 'lucide-react'
 
-// Mock data - replace with actual API calls
-const MOCK_JOBS = [
-  {
-    id: '1',
-    title: 'Frontend Engineer',
-    company: 'TechCorp',
-    description: 'Build amazing user interfaces with React and TypeScript',
-    location: 'San Francisco, CA',
-    jobType: 'Full-time',
-    postedDate: '2 days ago',
-    skills: ['React', 'TypeScript', 'CSS', 'JavaScript'],
-    applicants: 24,
-  },
-  {
-    id: '2',
-    title: 'Backend Developer',
-    company: 'DataFlow',
-    description: 'Design and implement scalable backend systems',
-    location: 'Remote',
-    jobType: 'Full-time',
-    postedDate: '1 week ago',
-    skills: ['Node.js', 'PostgreSQL', 'AWS', 'Docker'],
-    applicants: 18,
-  },
-  {
-    id: '3',
-    title: 'Product Manager',
-    company: 'StartupXYZ',
-    description: 'Lead product strategy and roadmap for our flagship product',
-    location: 'New York, NY',
-    jobType: 'Full-time',
-    postedDate: '3 days ago',
-    skills: ['Product Strategy', 'Analytics', 'User Research'],
-    applicants: 12,
-  },
-  {
-    id: '4',
-    title: 'Full Stack Developer',
-    company: 'WebStudio',
-    description: 'Work on full stack applications from database to UI',
-    location: 'Los Angeles, CA',
-    jobType: 'Contract',
-    postedDate: '5 days ago',
-    skills: ['React', 'Node.js', 'MongoDB', 'GraphQL'],
-    applicants: 31,
-  },
-  {
-    id: '5',
-    title: 'UX/UI Designer',
-    company: 'DesignHub',
-    description: 'Create beautiful and intuitive user experiences',
-    location: 'Remote',
-    jobType: 'Full-time',
-    postedDate: '1 day ago',
-    skills: ['Figma', 'User Research', 'Prototyping', 'CSS'],
-    applicants: 22,
-  },
-  {
-    id: '6',
-    title: 'DevOps Engineer',
-    company: 'CloudSystems',
-    description: 'Manage cloud infrastructure and deployment pipelines',
-    location: 'Remote',
-    jobType: 'Full-time',
-    postedDate: '4 days ago',
-    skills: ['Kubernetes', 'AWS', 'CI/CD', 'Linux'],
-    applicants: 15,
-  },
-]
+type BrowseJob = {
+  id: string
+  title: string
+  description: string
+  location: string | null
+  job_type: string | null
+  created_at: string
+  requirements: string[] | null
+  companies: {
+    id: string
+    name: string
+    logo_url: string | null
+    location: string | null
+    industry: string | null
+  }
+  applications?: { id: string; status: string }[]
+}
 
 export default function BrowseJobsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [jobType, setJobType] = useState<string>('')
   const [location, setLocation] = useState<string>('')
   const [hasFilters, setHasFilters] = useState(false)
+  const [jobs, setJobs] = useState<BrowseJob[]>([])
+  const [loading, setLoading] = useState(true)
+  const [userName, setUserName] = useState<string | undefined>()
+  const [userRole, setUserRole] = useState<string | undefined>()
 
-  const filteredJobs = MOCK_JOBS.filter((job) => {
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch current user for navbar (if logged in)
+        const {
+          data: { user },
+        } = await supabase.auth.getUser()
+
+        if (user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name, role')
+            .eq('id', user.id)
+            .single()
+
+          setUserName(profile?.full_name || user.email || undefined)
+          setUserRole(profile?.role || undefined)
+        }
+
+        // Fetch jobs from API
+        const params = new URLSearchParams()
+        if (searchQuery) params.set('title', searchQuery)
+        if (location) params.set('location', location)
+
+        const response = await fetch(`/api/jobs?${params.toString()}`)
+        if (response.ok) {
+          const { jobs: apiJobs } = await response.json()
+          setJobs(apiJobs || [])
+        }
+      } catch (error) {
+        console.error('Error loading jobs:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [searchQuery, location])
+
+  const filteredJobs = jobs.filter((job) => {
+    const jobCompany = job.companies?.name || ''
     const matchesSearch =
       job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      jobCompany.toLowerCase().includes(searchQuery.toLowerCase()) ||
       job.description.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesJobType = !jobType || job.jobType === jobType
-    const matchesLocation = !location || job.location.includes(location)
+
+    const normalizedJobType = job.job_type || ''
+    const matchesJobType = !jobType || normalizedJobType === jobType
+
+    const jobLocation = job.location || ''
+    const matchesLocation = !location || jobLocation.includes(location)
 
     return matchesSearch && matchesJobType && matchesLocation
   })
@@ -108,18 +105,19 @@ export default function BrowseJobsPage() {
     setJobType('')
     setLocation('')
     setHasFilters(false)
+    // Jobs will refetch due to effect dependencies
   }
 
   return (
     <main className="min-h-screen bg-background">
-      <Navbar />
+      <Navbar userRole={userRole} userName={userName} />
 
       {/* Header */}
       <section className="border-b border-border/40">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <h1 className="text-4xl font-semibold mb-3 text-foreground">Browse opportunities</h1>
           <p className="text-muted-foreground">
-            Discover {MOCK_JOBS.length} job opportunities waiting for you
+            Discover {jobs.length} job opportunities waiting for you
           </p>
         </div>
       </section>
@@ -213,7 +211,11 @@ export default function BrowseJobsPage() {
             </div>
 
             {/* Results */}
-            {filteredJobs.length > 0 ? (
+            {loading ? (
+              <Card className="p-8 text-center">
+                <p className="text-muted-foreground">Loading jobs...</p>
+              </Card>
+            ) : filteredJobs.length > 0 ? (
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">
                   {filteredJobs.length === 1
