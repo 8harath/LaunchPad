@@ -25,6 +25,27 @@ export async function PATCH(
       )
     }
 
+    const authHeader = request.headers.get('authorization')
+    if (!authHeader) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const token = authHeader.replace('Bearer ', '')
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser(token)
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     // Get application and verify company admin
     const { data: application, error: fetchError } = await supabase
       .from('applications')
@@ -36,6 +57,22 @@ export async function PATCH(
       return NextResponse.json(
         { error: 'Application not found' },
         { status: 404 }
+      )
+    }
+
+    const jobRelation = Array.isArray(application.jobs) ? application.jobs[0] : application.jobs
+    const companyId = jobRelation?.company_id
+
+    const { data: company, error: companyError } = await supabase
+      .from('companies')
+      .select('admin_id')
+      .eq('id', companyId)
+      .single()
+
+    if (companyError || !company || company.admin_id !== user.id) {
+      return NextResponse.json(
+        { error: 'Forbidden' },
+        { status: 403 }
       )
     }
 

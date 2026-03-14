@@ -88,11 +88,12 @@ export default function PostJobPage() {
 
     setSubmitting(true)
     try {
+      const { data: { session } } = await supabase.auth.getSession()
       const response = await fetch('/api/jobs', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user?.id}`,
+          'Authorization': `Bearer ${session?.access_token || ''}`,
         },
         body: JSON.stringify({
           companyId: company.id,

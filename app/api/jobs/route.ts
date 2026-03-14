@@ -99,6 +99,32 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const token = authHeader.replace('Bearer ', '')
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser(token)
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const { data: company, error: companyError } = await supabase
+      .from('companies')
+      .select('id, admin_id')
+      .eq('id', companyId)
+      .single()
+
+    if (companyError || !company || company.admin_id !== user.id) {
+      return NextResponse.json(
+        { error: 'Forbidden' },
+        { status: 403 }
+      )
+    }
+
     // Create job
     const { data, error } = await supabase
       .from('jobs')
