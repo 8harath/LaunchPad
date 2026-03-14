@@ -109,7 +109,8 @@ export default function SignupPage() {
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          // After Google OAuth, return to the login page where we handle redirect logic.
+          redirectTo: `${window.location.origin}/auth/login`,
         },
       })
 

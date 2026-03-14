@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import { Button } from '@/components/ui/button'
@@ -22,6 +22,32 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   const [error, setError] = useState('')
+
+  // If a user is already logged in (including after Google OAuth redirect),
+  // immediately send them to the appropriate dashboard.
+  useEffect(() => {
+    const checkExistingSession = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (!user) return
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+      if (profile?.role === 'company' || profile?.role === 'admin') {
+        router.replace('/dashboard/company')
+      } else {
+        router.replace('/dashboard/student')
+      }
+    }
+
+    checkExistingSession()
+  }, [router])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -68,7 +94,9 @@ export default function LoginPage() {
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          // After Google OAuth, return to the login page.
+          // The useEffect above will detect the logged-in user and redirect to a dashboard.
+          redirectTo: `${window.location.origin}/auth/login`,
         },
       })
 
