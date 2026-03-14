@@ -224,7 +224,17 @@ export default function BrowseJobsPage() {
                 </p>
                 <div className="grid gap-3">
                   {filteredJobs.map((job) => (
-                    <JobCard key={job.id} {...job} />
+                    <JobCard
+                      key={job.id}
+                      id={job.id}
+                      title={job.title}
+                      company={job.companies?.name || 'Unknown company'}
+                      description={job.description}
+                      location={job.location || 'Location not specified'}
+                      jobType={job.job_type || 'Not specified'}
+                      postedDate={new Date(job.created_at).toLocaleDateString()}
+                      skills={job.requirements || []}
+                    />
                   ))}
                 </div>
               </div>

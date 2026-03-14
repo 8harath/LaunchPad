@@ -2,15 +2,28 @@
 
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { ArrowRight } from 'lucide-react'
+import {
+  ArrowRight,
+  BriefcaseBusiness,
+  ChevronRight,
+  Layers3,
+  Sparkles,
+} from 'lucide-react'
 
 export default function Home() {
   return (
     <main className="min-h-screen bg-background">
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b border-border/40">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="font-semibold text-foreground">LaunchPad</div>
+      <nav className="sticky top-0 z-50 border-b border-border/70 bg-background/85 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-2xl border border-border bg-card shadow-sm">
+              <span className="text-sm font-semibold">LP</span>
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-foreground">LaunchPad</div>
+              <div className="text-xs text-muted-foreground">career operating system</div>
+            </div>
+          </div>
           <div className="flex gap-2">
             <Link href="/auth/login">
               <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
@@ -18,7 +31,7 @@ export default function Home() {
               </Button>
             </Link>
             <Link href="/auth/signup">
-              <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground">
+              <Button size="sm" className="rounded-full px-4">
                 Get started
               </Button>
             </Link>
@@ -26,102 +39,172 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="py-32 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto space-y-8">
-          <div className="space-y-6 text-center">
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-semibold text-balance leading-tight text-foreground">
-              Launch your career at hackathons
-            </h1>
-            <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              Connect with top companies, showcase your skills, and land amazing opportunities. All in one place.
-            </p>
+      <section className="surface-grid overflow-hidden px-4 py-18 sm:px-6 sm:py-24 lg:px-8">
+        <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+          <div className="space-y-8">
+            <div className="reveal-up inline-flex items-center gap-2 rounded-full border border-border bg-card/90 px-3 py-1 text-xs text-muted-foreground">
+              <Sparkles className="h-3.5 w-3.5" />
+              Built for students, recruiters, and focused hiring loops
+            </div>
+
+            <div className="space-y-5">
+              <h1 className="reveal-up reveal-up-delay-1 text-5xl font-semibold leading-[0.96] tracking-[-0.04em] text-foreground sm:text-6xl lg:text-7xl">
+                Quietly powerful hiring for hackathon talent.
+              </h1>
+              <p className="reveal-up reveal-up-delay-2 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
+                LaunchPad gives students a clear path from projects to interviews, and gives recruiters a calm, structured place to discover promising builders.
+              </p>
+            </div>
+
+            <div className="reveal-up reveal-up-delay-3 flex flex-wrap gap-3 pt-2">
+              <Link href="/auth/signup">
+                <Button size="lg" className="h-11 rounded-full px-6">
+                  Start hiring <ArrowRight className="ml-1 h-4 w-4" />
+                </Button>
+              </Link>
+              <Link href="/browse">
+                <Button size="lg" variant="outline" className="h-11 rounded-full border-border bg-card px-6">
+                  Explore roles
+                </Button>
+              </Link>
+            </div>
+
+            <div className="grid max-w-2xl gap-3 pt-4 sm:grid-cols-3">
+              {[
+                { value: '120+', label: 'active roles' },
+                { value: '35+', label: 'startup teams' },
+                { value: '8 min', label: 'avg. recruiter triage' },
+              ].map((item, idx) => (
+                <div
+                  key={item.label}
+                  className={`paper reveal-up rounded-3xl border border-border/80 p-4 ${idx === 1 ? 'reveal-up-delay-1' : idx === 2 ? 'reveal-up-delay-2' : ''}`}
+                >
+                  <div className="text-2xl font-semibold tracking-[-0.03em]">{item.value}</div>
+                  <div className="mt-1 text-sm text-muted-foreground">{item.label}</div>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className="flex gap-3 justify-center pt-4">
-            <Link href="/auth/signup">
-              <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground h-12 px-8 font-medium">
-                Get started <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-            <Link href="/browse">
-              <Button size="lg" variant="outline" className="h-12 px-8 font-medium">
-                Browse jobs
-              </Button>
-            </Link>
+          <div className="float-gentle">
+            <div className="paper relative overflow-hidden rounded-[2rem] border border-border/80 p-5 sm:p-6">
+              <div className="mb-5 flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-foreground">Hiring board</p>
+                  <p className="text-xs text-muted-foreground">Minimal, readable, current</p>
+                </div>
+                <div className="rounded-full border border-border bg-background px-3 py-1 text-xs text-muted-foreground">
+                  March 2026
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {[
+                  ['Razorpay', 'Software Development Engineer I', 'Bengaluru'],
+                  ['Freshworks', 'Frontend Engineering Intern', 'Chennai'],
+                  ['Chargebee', 'Backend Engineer', 'Remote'],
+                ].map(([company, role, place], idx) => (
+                  <div key={role} className="rounded-2xl border border-border/70 bg-background/90 p-4">
+                    <div className="mb-3 flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">{company}</p>
+                        <p className="text-xs text-muted-foreground">{role}</p>
+                      </div>
+                      <div className="rounded-full bg-accent px-2.5 py-1 text-xs text-foreground">
+                        {idx === 1 ? 'Internship' : 'Full-time'}
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>{place}</span>
+                      <span className="inline-flex items-center gap-1">
+                        Open role <ChevronRight className="h-3.5 w-3.5" />
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Divider */}
-      <div className="border-t border-border/40" />
-
-      {/* Features Grid */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-semibold text-center mb-16 text-foreground">Everything you need</h2>
-          <div className="grid md:grid-cols-3 gap-6">
+      <section className="px-4 py-20 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-12 max-w-2xl">
+            <p className="mb-3 text-xs uppercase tracking-[0.22em] text-muted-foreground">System</p>
+            <h2 className="text-3xl font-semibold tracking-[-0.03em] text-foreground sm:text-4xl">
+              Everything stays legible, fast, and structured.
+            </h2>
+          </div>
+          <div className="grid gap-6 md:grid-cols-3">
             {[
               {
+                icon: BriefcaseBusiness,
                 title: 'Find opportunities',
-                description: 'Browse and search through hundreds of career opportunities from top companies and startups.',
+                description: 'Students browse a clean job pipeline with just enough context to decide quickly.',
               },
               {
+                icon: Layers3,
                 title: 'Track applications',
-                description: 'Monitor your applications in real-time and get instant notifications on status changes.',
+                description: 'Recruiters and students see the same timeline clearly, without dashboard clutter.',
               },
               {
+                icon: Sparkles,
                 title: 'Land your role',
-                description: 'Secure offers and connect directly with top companies and hiring managers.',
+                description: 'From project proof to final offer, every step is organized around momentum.',
               },
-            ].map((feature, idx) => (
+            ].map((feature) => (
               <div
-                key={idx}
-                className="p-6 rounded-md border border-border/50 hover:border-border hover:bg-muted/20 transition-all"
+                key={feature.title}
+                className="paper rounded-[1.75rem] border border-border/80 p-6 transition-transform duration-300 hover:-translate-y-1"
               >
-                <div className="h-10 w-10 rounded-md bg-primary/10 text-primary flex items-center justify-center mb-4 font-semibold text-sm">
-                  {idx + 1}
+                <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl border border-border bg-accent text-foreground">
+                  <feature.icon className="h-4.5 w-4.5" />
                 </div>
-                <h3 className="font-semibold text-foreground mb-2">{feature.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
+                <h3 className="mb-2 text-lg font-semibold text-foreground">{feature.title}</h3>
+                <p className="text-sm leading-6 text-muted-foreground">{feature.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* How It Works */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-muted/30 border-y border-border/40">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-semibold text-center mb-16 text-foreground">How it works</h2>
-          <div className="space-y-8 max-w-2xl mx-auto">
+      <section className="border-y border-border/70 bg-muted/45 px-4 py-20 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-12 max-w-2xl">
+            <p className="mb-3 text-xs uppercase tracking-[0.22em] text-muted-foreground">Flow</p>
+            <h2 className="text-3xl font-semibold tracking-[-0.03em] text-foreground sm:text-4xl">
+              A focused path from sign-up to shortlist.
+            </h2>
+          </div>
+          <div className="grid gap-4 lg:grid-cols-2">
             {[
               {
                 title: 'Create your profile',
-                description: 'Sign up and build your professional profile. Add your skills, experience, and resume.',
+                description: 'Students add skills, project proof, and the basics recruiters actually need.',
               },
               {
                 title: 'Browse opportunities',
-                description: 'Explore jobs that match your interests. Filter by company, location, and role type.',
+                description: 'Roles stay searchable and readable, with lightweight filters for fast scanning.',
               },
               {
                 title: 'Submit applications',
-                description: 'Apply to positions you like. Track the status of your applications in real-time.',
+                description: 'Applications move into a single shared pipeline with transparent status updates.',
               },
               {
                 title: 'Get hired',
-                description: 'Hear back from companies and take your career to the next level.',
+                description: 'Recruiters review, shortlist, and close the loop without losing candidate context.',
               },
             ].map((step, idx) => (
-              <div key={idx} className="flex gap-6">
+              <div key={step.title} className="paper flex gap-5 rounded-[1.75rem] border border-border/80 p-5">
                 <div className="flex-shrink-0">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary text-primary-foreground font-semibold text-sm">
-                    {idx + 1}
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary text-primary-foreground font-semibold text-sm">
+                    0{idx + 1}
                   </div>
                 </div>
                 <div className="flex-1 pt-1">
-                  <h3 className="font-semibold text-foreground mb-1">{step.title}</h3>
-                  <p className="text-sm text-muted-foreground">{step.description}</p>
+                  <h3 className="mb-1 font-semibold text-foreground">{step.title}</h3>
+                  <p className="text-sm leading-6 text-muted-foreground">{step.description}</p>
                 </div>
               </div>
             ))}
@@ -129,59 +212,59 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Stats */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid md:grid-cols-3 gap-12 text-center">
+      <section className="px-4 py-20 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <div className="grid gap-6 md:grid-cols-3">
             {[
-              { stat: '500+', label: 'Job opportunities' },
-              { stat: '1000+', label: 'Active users' },
-              { stat: '95%', label: 'Success rate' },
-            ].map((item, idx) => (
-              <div key={idx} className="space-y-2">
-                <div className="text-3xl sm:text-4xl font-semibold text-foreground">{item.stat}</div>
-                <p className="text-sm text-muted-foreground">{item.label}</p>
+              { stat: '500+', label: 'student applications tracked' },
+              { stat: '40+', label: 'recruiter workflows simplified' },
+              { stat: '2026', label: 'current platform seed and content year' },
+            ].map((item) => (
+              <div key={item.label} className="paper rounded-[1.75rem] border border-border/80 p-6 text-center">
+                <div className="text-3xl font-semibold tracking-[-0.04em] text-foreground sm:text-4xl">{item.stat}</div>
+                <p className="mt-2 text-sm text-muted-foreground">{item.label}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 border-t border-border/40">
-        <div className="max-w-3xl mx-auto text-center space-y-8">
+      <section className="border-t border-border/70 px-4 py-20 sm:px-6 lg:px-8">
+        <div className="paper mx-auto max-w-4xl rounded-[2rem] border border-border/80 px-6 py-12 text-center sm:px-10">
           <div className="space-y-4">
-            <h2 className="text-3xl sm:text-4xl font-semibold text-foreground">
+            <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Start</p>
+            <h2 className="text-3xl font-semibold tracking-[-0.03em] text-foreground sm:text-4xl">
               Ready to get started?
             </h2>
-            <p className="text-muted-foreground">
-              Join thousands of students finding their next opportunity
+            <p className="mx-auto max-w-xl text-muted-foreground">
+              Join students and recruiters who want a hiring experience that feels calm, crisp, and modern.
             </p>
           </div>
-          <Link href="/auth/signup">
-            <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground h-12 px-8 font-medium">
-              Create account
-            </Button>
-          </Link>
+          <div className="mt-8 flex justify-center">
+            <Link href="/auth/signup">
+              <Button size="lg" className="h-11 rounded-full px-6">
+                Create account
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-border/40 bg-muted/30">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-8">
+      <footer className="border-t border-border/70 bg-muted/35">
+        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
+          <div className="flex flex-col items-center justify-between gap-8 sm:flex-row">
             <div>
               <h3 className="font-semibold text-foreground">LaunchPad</h3>
               <p className="text-sm text-muted-foreground">Launch your career at hackathons</p>
             </div>
             <div className="flex gap-6 text-sm text-muted-foreground">
-              <a href="#" className="hover:text-foreground transition-colors">Privacy</a>
-              <a href="#" className="hover:text-foreground transition-colors">Terms</a>
-              <a href="#" className="hover:text-foreground transition-colors">Contact</a>
+              <a href="#" className="transition-colors hover:text-foreground">Privacy</a>
+              <a href="#" className="transition-colors hover:text-foreground">Terms</a>
+              <a href="#" className="transition-colors hover:text-foreground">Contact</a>
             </div>
           </div>
-          <div className="mt-12 pt-8 border-t border-border/40 text-center text-sm text-muted-foreground">
-            <p>© 2024 LaunchPad. All rights reserved.</p>
+          <div className="mt-12 border-t border-border/40 pt-8 text-center text-sm text-muted-foreground">
+            <p>Copyright 2026 LaunchPad. All rights reserved.</p>
           </div>
         </div>
       </footer>
