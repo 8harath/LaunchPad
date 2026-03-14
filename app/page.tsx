@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { AppLogo } from '@/components/app-logo'
+import { Navbar } from '@/components/navbar'
 import {
   ArrowRight,
   BriefcaseBusiness,
@@ -14,23 +15,7 @@ import {
 export default function Home() {
   return (
     <main className="min-h-screen bg-background">
-      <nav className="sticky top-0 z-50 border-b border-border/70 bg-background/85 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <AppLogo />
-          <div className="flex gap-2">
-            <Link href="/auth/login">
-              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-                Sign in
-              </Button>
-            </Link>
-            <Link href="/auth/signup">
-              <Button size="sm" className="rounded-full px-4">
-                Get started
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <Navbar />
 
       <section className="surface-grid overflow-hidden px-4 py-18 sm:px-6 sm:py-24 lg:px-8">
         <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">

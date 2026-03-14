@@ -46,6 +46,12 @@ export function Navbar({ userRole, userName, avatarUrl, onLogout }: NavbarProps)
   const displayName = userName || resolvedName
   const displayRole = userRole || resolvedRole
   const displayAvatar = avatarUrl || resolvedAvatar
+  const logoHref =
+    displayRole === 'student'
+      ? '/dashboard/student'
+      : displayRole === 'company' || displayRole === 'admin'
+        ? '/dashboard/company'
+        : '/'
   const initials = (displayName || 'LP')
     .split(' ')
     .filter(Boolean)
@@ -67,7 +73,7 @@ export function Navbar({ userRole, userName, avatarUrl, onLogout }: NavbarProps)
     <nav className="sticky top-0 z-50 border-b border-border/70 bg-background/85 backdrop-blur-xl">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          <AppLogo />
+          <AppLogo href={logoHref} />
 
           <div className="hidden items-center gap-6 text-sm md:flex">
             {!displayRole ? (

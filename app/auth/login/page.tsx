@@ -71,9 +71,9 @@ export default function LoginPage() {
           .single()
 
         if (profile?.role === 'company' || profile?.role === 'admin') {
-          router.push('/dashboard/company')
+          router.replace('/dashboard/company')
         } else {
-          router.push('/dashboard/student')
+          router.replace('/dashboard/student')
         }
       }
     } catch {
@@ -91,7 +91,7 @@ export default function LoginPage() {
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/login`,
+          redirectTo: `${window.location.origin}/auth/callback`,
         },
       })
 
