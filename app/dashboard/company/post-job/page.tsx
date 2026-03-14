@@ -41,17 +41,11 @@ export default function PostJobPage() {
 
         const { data: profile } = await supabase
           .from('profiles')
-          .select('full_name')
+          .select('full_name, role')
           .eq('id', authUser.id)
           .single()
 
         setUserName(profile?.full_name || authUser.email || undefined)
-
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', authUser.id)
-          .single()
 
         if (profile?.role !== 'company') {
           router.push('/dashboard/student')
