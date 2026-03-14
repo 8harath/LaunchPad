@@ -75,7 +75,17 @@ export type Database = {
           university: string | null
           major: string | null
           graduation_year: number | null
+          date_of_birth: string | null
+          phone: string | null
+          location: string | null
+          current_title: string | null
+          current_company: string | null
+          years_of_experience: number | null
+          experience_summary: string | null
           skills: string[]
+          preferred_job_types: string[]
+          expected_salary_min: number | null
+          expected_salary_max: number | null
           resume_url: string | null
           github_url: string | null
           linkedin_url: string | null
@@ -88,7 +98,17 @@ export type Database = {
           university?: string | null
           major?: string | null
           graduation_year?: number | null
+          date_of_birth?: string | null
+          phone?: string | null
+          location?: string | null
+          current_title?: string | null
+          current_company?: string | null
+          years_of_experience?: number | null
+          experience_summary?: string | null
           skills?: string[]
+          preferred_job_types?: string[]
+          expected_salary_min?: number | null
+          expected_salary_max?: number | null
           resume_url?: string | null
           github_url?: string | null
           linkedin_url?: string | null
@@ -100,7 +120,17 @@ export type Database = {
           university?: string | null
           major?: string | null
           graduation_year?: number | null
+          date_of_birth?: string | null
+          phone?: string | null
+          location?: string | null
+          current_title?: string | null
+          current_company?: string | null
+          years_of_experience?: number | null
+          experience_summary?: string | null
           skills?: string[]
+          preferred_job_types?: string[]
+          expected_salary_min?: number | null
+          expected_salary_max?: number | null
           resume_url?: string | null
           github_url?: string | null
           linkedin_url?: string | null

@@ -51,7 +51,17 @@ CREATE TABLE IF NOT EXISTS public.student_profiles (
   university TEXT,
   major TEXT,
   graduation_year INTEGER,
+  date_of_birth DATE,
+  phone TEXT,
+  location TEXT,
+  current_title TEXT,
+  current_company TEXT,
+  years_of_experience NUMERIC(4,1),
+  experience_summary TEXT,
   skills TEXT[] DEFAULT '{}',
+  preferred_job_types TEXT[] DEFAULT '{}',
+  expected_salary_min INTEGER,
+  expected_salary_max INTEGER,
   resume_url TEXT,
   github_url TEXT,
   linkedin_url TEXT,
@@ -119,6 +129,18 @@ CREATE TABLE IF NOT EXISTS public.admin_settings (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Backfill student profile columns for existing databases
+ALTER TABLE public.student_profiles ADD COLUMN IF NOT EXISTS date_of_birth DATE;
+ALTER TABLE public.student_profiles ADD COLUMN IF NOT EXISTS phone TEXT;
+ALTER TABLE public.student_profiles ADD COLUMN IF NOT EXISTS location TEXT;
+ALTER TABLE public.student_profiles ADD COLUMN IF NOT EXISTS current_title TEXT;
+ALTER TABLE public.student_profiles ADD COLUMN IF NOT EXISTS current_company TEXT;
+ALTER TABLE public.student_profiles ADD COLUMN IF NOT EXISTS years_of_experience NUMERIC(4,1);
+ALTER TABLE public.student_profiles ADD COLUMN IF NOT EXISTS experience_summary TEXT;
+ALTER TABLE public.student_profiles ADD COLUMN IF NOT EXISTS preferred_job_types TEXT[] DEFAULT '{}';
+ALTER TABLE public.student_profiles ADD COLUMN IF NOT EXISTS expected_salary_min INTEGER;
+ALTER TABLE public.student_profiles ADD COLUMN IF NOT EXISTS expected_salary_max INTEGER;
 
 -- Create indexes for better query performance
 CREATE INDEX IF NOT EXISTS idx_profiles_role ON public.profiles(role);

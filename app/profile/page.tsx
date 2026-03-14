@@ -34,7 +34,17 @@ function ProfilePageContent() {
     university: '',
     major: '',
     graduation_year: '',
+    date_of_birth: '',
+    phone: '',
+    location: '',
+    current_title: '',
+    current_company: '',
+    years_of_experience: '',
+    experience_summary: '',
     skills: '',
+    preferred_job_types: '',
+    expected_salary_min: '',
+    expected_salary_max: '',
     resume_url: '',
     github_url: '',
     linkedin_url: '',
@@ -94,7 +104,17 @@ function ProfilePageContent() {
               university: studentData.university || '',
               major: studentData.major || '',
               graduation_year: studentData.graduation_year ? String(studentData.graduation_year) : '',
+              date_of_birth: studentData.date_of_birth || '',
+              phone: studentData.phone || '',
+              location: studentData.location || '',
+              current_title: studentData.current_title || '',
+              current_company: studentData.current_company || '',
+              years_of_experience: studentData.years_of_experience ? String(studentData.years_of_experience) : '',
+              experience_summary: studentData.experience_summary || '',
               skills: (studentData.skills || []).join(', '),
+              preferred_job_types: (studentData.preferred_job_types || []).join(', '),
+              expected_salary_min: studentData.expected_salary_min ? String(studentData.expected_salary_min) : '',
+              expected_salary_max: studentData.expected_salary_max ? String(studentData.expected_salary_max) : '',
               resume_url: studentData.resume_url || '',
               github_url: studentData.github_url || '',
               linkedin_url: studentData.linkedin_url || '',
@@ -167,7 +187,17 @@ function ProfilePageContent() {
             university: studentProfile.university.trim() || null,
             major: studentProfile.major.trim() || null,
             graduation_year: studentProfile.graduation_year ? Number(studentProfile.graduation_year) : null,
+            date_of_birth: studentProfile.date_of_birth || null,
+            phone: studentProfile.phone.trim() || null,
+            location: studentProfile.location.trim() || null,
+            current_title: studentProfile.current_title.trim() || null,
+            current_company: studentProfile.current_company.trim() || null,
+            years_of_experience: studentProfile.years_of_experience ? Number(studentProfile.years_of_experience) : null,
+            experience_summary: studentProfile.experience_summary.trim() || null,
             skills: studentProfile.skills.split(',').map((skill) => skill.trim()).filter(Boolean),
+            preferred_job_types: studentProfile.preferred_job_types.split(',').map((jobType) => jobType.trim()).filter(Boolean),
+            expected_salary_min: studentProfile.expected_salary_min ? Number(studentProfile.expected_salary_min) : null,
+            expected_salary_max: studentProfile.expected_salary_max ? Number(studentProfile.expected_salary_max) : null,
             resume_url: studentProfile.resume_url.trim() || null,
             github_url: studentProfile.github_url.trim() || null,
             linkedin_url: studentProfile.linkedin_url.trim() || null,
@@ -326,11 +356,21 @@ function ProfilePageContent() {
                   <div><Label htmlFor="university">University</Label><Input id="university" value={studentProfile.university} onChange={(e) => setStudentProfile((current) => ({ ...current, university: e.target.value }))} className="mt-2" /></div>
                   <div><Label htmlFor="major">Major</Label><Input id="major" value={studentProfile.major} onChange={(e) => setStudentProfile((current) => ({ ...current, major: e.target.value }))} className="mt-2" /></div>
                   <div><Label htmlFor="graduation_year">Graduation year</Label><Input id="graduation_year" type="number" value={studentProfile.graduation_year} onChange={(e) => setStudentProfile((current) => ({ ...current, graduation_year: e.target.value }))} className="mt-2" placeholder="2026" /></div>
+                  <div><Label htmlFor="date_of_birth">Date of birth</Label><Input id="date_of_birth" type="date" value={studentProfile.date_of_birth} onChange={(e) => setStudentProfile((current) => ({ ...current, date_of_birth: e.target.value }))} className="mt-2" /></div>
+                  <div><Label htmlFor="phone">Phone</Label><Input id="phone" value={studentProfile.phone} onChange={(e) => setStudentProfile((current) => ({ ...current, phone: e.target.value }))} className="mt-2" placeholder="+91 98765 43210" /></div>
+                  <div><Label htmlFor="student_location">Location</Label><Input id="student_location" value={studentProfile.location} onChange={(e) => setStudentProfile((current) => ({ ...current, location: e.target.value }))} className="mt-2" placeholder="Chennai, India" /></div>
+                  <div><Label htmlFor="current_title">Current title</Label><Input id="current_title" value={studentProfile.current_title} onChange={(e) => setStudentProfile((current) => ({ ...current, current_title: e.target.value }))} className="mt-2" placeholder="Frontend Intern" /></div>
+                  <div><Label htmlFor="current_company">Current company</Label><Input id="current_company" value={studentProfile.current_company} onChange={(e) => setStudentProfile((current) => ({ ...current, current_company: e.target.value }))} className="mt-2" placeholder="Campus Labs" /></div>
+                  <div><Label htmlFor="years_of_experience">Years of experience</Label><Input id="years_of_experience" type="number" step="0.1" value={studentProfile.years_of_experience} onChange={(e) => setStudentProfile((current) => ({ ...current, years_of_experience: e.target.value }))} className="mt-2" placeholder="1.5" /></div>
                   <div><Label htmlFor="skills">Skills</Label><Input id="skills" value={studentProfile.skills} onChange={(e) => setStudentProfile((current) => ({ ...current, skills: e.target.value }))} className="mt-2" placeholder="React, Supabase, TypeScript" /></div>
+                  <div><Label htmlFor="preferred_job_types">Preferred job types</Label><Input id="preferred_job_types" value={studentProfile.preferred_job_types} onChange={(e) => setStudentProfile((current) => ({ ...current, preferred_job_types: e.target.value }))} className="mt-2" placeholder="Full-time, Internship, Remote" /></div>
+                  <div><Label htmlFor="expected_salary_min">Expected salary min</Label><Input id="expected_salary_min" type="number" value={studentProfile.expected_salary_min} onChange={(e) => setStudentProfile((current) => ({ ...current, expected_salary_min: e.target.value }))} className="mt-2" placeholder="800000" /></div>
+                  <div><Label htmlFor="expected_salary_max">Expected salary max</Label><Input id="expected_salary_max" type="number" value={studentProfile.expected_salary_max} onChange={(e) => setStudentProfile((current) => ({ ...current, expected_salary_max: e.target.value }))} className="mt-2" placeholder="1400000" /></div>
                   <div><Label htmlFor="github_url">GitHub URL</Label><Input id="github_url" value={studentProfile.github_url} onChange={(e) => setStudentProfile((current) => ({ ...current, github_url: e.target.value }))} className="mt-2" /></div>
                   <div><Label htmlFor="linkedin_url">LinkedIn URL</Label><Input id="linkedin_url" value={studentProfile.linkedin_url} onChange={(e) => setStudentProfile((current) => ({ ...current, linkedin_url: e.target.value }))} className="mt-2" /></div>
                   <div><Label htmlFor="portfolio_url">Portfolio URL</Label><Input id="portfolio_url" value={studentProfile.portfolio_url} onChange={(e) => setStudentProfile((current) => ({ ...current, portfolio_url: e.target.value }))} className="mt-2" /></div>
                   <div><Label htmlFor="resume_url">Resume URL</Label><Input id="resume_url" value={studentProfile.resume_url} onChange={(e) => setStudentProfile((current) => ({ ...current, resume_url: e.target.value }))} className="mt-2" /></div>
+                  <div className="md:col-span-2"><Label htmlFor="experience_summary">Experience summary</Label><Textarea id="experience_summary" value={studentProfile.experience_summary} onChange={(e) => setStudentProfile((current) => ({ ...current, experience_summary: e.target.value }))} className="mt-2 min-h-28" placeholder="Summarize internships, projects, ownership, and measurable outcomes." /></div>
                 </div>
               </Card>
             ) : null}
