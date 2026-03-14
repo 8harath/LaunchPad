@@ -183,10 +183,10 @@ vercel
 ## Testing Workflows
 
 ### Student Workflow
-1. Sign up as student
+1. Sign up as student.
 2. Go to "Browse Jobs"
-3. Click on a job to view details
-4. Click "Apply Now" to submit application
+3. Click on a job to view details.
+4. Click "Apply Now" to submit application.
 5. Visit "My Applications" dashboard to track status
 
 ### Company Workflow
