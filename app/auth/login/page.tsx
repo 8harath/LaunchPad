@@ -39,11 +39,7 @@ export default function LoginPage() {
         return
       }
 
-      if (data.session) {
-        // Store session info in localStorage for the app to use
-        localStorage.setItem('supabase_session', JSON.stringify(data.session))
-        localStorage.setItem('supabase_user', JSON.stringify(data.user))
-
+      if (data.session && data.user) {
         // Fetch user profile to determine redirect
         const { data: profile } = await supabase
           .from('profiles')
@@ -51,9 +47,7 @@ export default function LoginPage() {
           .eq('id', data.user.id)
           .single()
 
-        if (profile?.role === 'company') {
-          router.push('/dashboard/company')
-        } else if (profile?.role === 'admin') {
+        if (profile?.role === 'company' || profile?.role === 'admin') {
           router.push('/dashboard/company')
         } else {
           router.push('/dashboard/student')

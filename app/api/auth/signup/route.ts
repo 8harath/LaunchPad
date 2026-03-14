@@ -19,7 +19,7 @@ type SignupRequest = {
   email: string
   password: string
   fullName: string
-  role: 'student' | 'company'
+  role: 'student' | 'company' | 'admin'
   university?: string
   major?: string
   graduationYear?: number
@@ -39,6 +39,10 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+
+    // Sanitize role to allowed values
+    const normalizedRole: 'student' | 'company' | 'admin' =
+      role === 'company' ? 'company' : role === 'admin' ? 'admin' : 'student'
 
     // Create auth user
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
@@ -64,7 +68,7 @@ export async function POST(request: NextRequest) {
           id: userId,
           email,
           full_name: fullName,
-          role: role === 'company' ? 'company' : 'student',
+          role: normalizedRole,
         },
       ])
 
@@ -78,7 +82,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create role-specific profile
-    if (role === 'student') {
+    if (normalizedRole === 'student') {
       const { error: studentError } = await supabase
         .from('student_profiles')
         .insert([
@@ -97,7 +101,7 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         )
       }
-    } else if (role === 'company') {
+    } else if (normalizedRole === 'company') {
       const { error: companyError } = await supabase
         .from('companies')
         .insert([
