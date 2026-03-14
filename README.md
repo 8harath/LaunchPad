@@ -222,7 +222,7 @@ vercel
 
 For detailed setup instructions, see `SUPABASE_SETUP.md`.
 
-For issues or questions, please open an issue on GitHub.
+For issues or questions, please open an issue on GitHub
 
 ## License
 
@@ -230,4 +230,4 @@ MIT License
 
 ## Acknowledgments
 
-Built with Next.js, React, Supabase, and shadcn/ui.
+Built with Next.js, React, Supabase, and shadcn/ui
