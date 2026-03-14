@@ -16,15 +16,7 @@ export async function GET(request: NextRequest) {
     const studentId = searchParams.get('studentId')
     const jobId = searchParams.get('jobId')
 
-    let query = supabase
-      .from('applications')
-      .select(
-        `
-        *,
-        jobs(id, title, company_id, companies(id, name, logo_url)),
-        student_profiles(id, full_name:profiles(full_name), university)
-        `
-      )
+    let query = supabase.from('applications').select('*', { count: 'exact' })
 
     if (studentId) {
       query = query.eq('student_id', studentId)
@@ -41,7 +33,100 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
-    return NextResponse.json({ applications: data, count })
+    if (!data || data.length === 0) {
+      return NextResponse.json({ applications: [], count: count || 0 })
+    }
+
+    const jobIds = [...new Set(data.map((application) => application.job_id))]
+    const studentIds = [...new Set(data.map((application) => application.student_id))]
+
+    const [
+      { data: jobs, error: jobsError },
+      { data: studentProfiles, error: studentProfilesError },
+      { data: profiles, error: profilesError },
+    ] = await Promise.all([
+      supabase
+        .from('jobs')
+        .select('id, title, company_id')
+        .in('id', jobIds),
+      supabase
+        .from('student_profiles')
+        .select('id, university')
+        .in('id', studentIds),
+      supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .in('id', studentIds),
+    ])
+
+    if (jobsError || studentProfilesError || profilesError) {
+      return NextResponse.json(
+        {
+          error:
+            jobsError?.message ||
+            studentProfilesError?.message ||
+            profilesError?.message ||
+            'Failed to load application details',
+        },
+        { status: 400 }
+      )
+    }
+
+    const companyIds = [...new Set((jobs || []).map((job) => job.company_id))]
+    const { data: companies, error: companiesError } = await supabase
+      .from('companies')
+      .select('id, name, logo_url')
+      .in('id', companyIds)
+
+    if (companiesError) {
+      return NextResponse.json({ error: companiesError.message }, { status: 400 })
+    }
+
+    const jobsById = new Map((jobs || []).map((job) => [job.id, job]))
+    const companiesById = new Map((companies || []).map((company) => [company.id, company]))
+    const studentProfilesById = new Map(
+      (studentProfiles || []).map((profile) => [profile.id, profile])
+    )
+    const profilesById = new Map((profiles || []).map((profile) => [profile.id, profile]))
+
+    const applications = data.map((application) => {
+      const job = jobsById.get(application.job_id)
+      const company = job ? companiesById.get(job.company_id) : null
+      const studentProfile = studentProfilesById.get(application.student_id)
+      const profile = profilesById.get(application.student_id)
+
+      return {
+        ...application,
+        jobs: job
+          ? {
+              id: job.id,
+              title: job.title,
+              company_id: job.company_id,
+              companies: company
+                ? {
+                    id: company.id,
+                    name: company.name,
+                    logo_url: company.logo_url,
+                  }
+                : null,
+            }
+          : null,
+        student_profiles: studentProfile
+          ? {
+              id: studentProfile.id,
+              university: studentProfile.university,
+              profiles: profile
+                ? {
+                    full_name: profile.full_name,
+                    email: profile.email,
+                  }
+                : null,
+            }
+          : null,
+      }
+    })
+
+    return NextResponse.json({ applications, count: count || applications.length })
   } catch (error) {
     console.error('Error fetching applications:', error)
     return NextResponse.json(

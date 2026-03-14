@@ -1,9 +1,19 @@
 import { Badge } from '@/components/ui/badge'
 import { Check, Clock, X, AlertCircle, CheckCircle2 } from 'lucide-react'
 
-type ApplicationStatus = 'pending' | 'reviewed' | 'shortlisted' | 'rejected' | 'accepted'
+type Status =
+  | 'pending'
+  | 'reviewing'
+  | 'reviewed'
+  | 'shortlisted'
+  | 'rejected'
+  | 'accepted'
+  | 'offer_extended'
+  | 'open'
+  | 'closed'
+  | 'filled'
 
-const statusConfig: Record<ApplicationStatus, {
+const statusConfig: Record<Status, {
   label: string
   variant: 'default' | 'secondary' | 'destructive' | 'outline'
   icon: React.ReactNode
@@ -15,6 +25,11 @@ const statusConfig: Record<ApplicationStatus, {
   },
   reviewed: {
     label: 'Under Review',
+    variant: 'outline',
+    icon: <AlertCircle className="w-3 h-3" />,
+  },
+  reviewing: {
+    label: 'Reviewing',
     variant: 'outline',
     icon: <AlertCircle className="w-3 h-3" />,
   },
@@ -33,15 +48,39 @@ const statusConfig: Record<ApplicationStatus, {
     variant: 'default',
     icon: <CheckCircle2 className="w-3 h-3" />,
   },
+  offer_extended: {
+    label: 'Offer Extended',
+    variant: 'default',
+    icon: <CheckCircle2 className="w-3 h-3" />,
+  },
+  open: {
+    label: 'Open',
+    variant: 'default',
+    icon: <CheckCircle2 className="w-3 h-3" />,
+  },
+  closed: {
+    label: 'Closed',
+    variant: 'secondary',
+    icon: <Clock className="w-3 h-3" />,
+  },
+  filled: {
+    label: 'Filled',
+    variant: 'outline',
+    icon: <Check className="w-3 h-3" />,
+  },
 }
 
 interface StatusBadgeProps {
-  status: ApplicationStatus
+  status: string
   className?: string
 }
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {
-  const config = statusConfig[status]
+  const config = statusConfig[status as Status] ?? {
+    label: status.replace(/_/g, ' '),
+    variant: 'outline' as const,
+    icon: <AlertCircle className="w-3 h-3" />,
+  }
 
   return (
     <Badge variant={config.variant} className={`gap-1 ${className}`}>
