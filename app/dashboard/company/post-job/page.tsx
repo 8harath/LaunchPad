@@ -16,6 +16,7 @@ export default function PostJobPage() {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [user, setUser] = useState<any>(null)
+  const [userName, setUserName] = useState<string | undefined>()
 
   const [formData, setFormData] = useState({
     title: '',
@@ -37,6 +38,14 @@ export default function PostJobPage() {
           return
         }
         setUser(authUser)
+
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', authUser.id)
+          .single()
+
+        setUserName(profile?.full_name || authUser.email || undefined)
 
         const { data: profile } = await supabase
           .from('profiles')
@@ -65,6 +74,11 @@ export default function PostJobPage() {
 
     checkAuth()
   }, [router])
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.push('/')
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -114,7 +128,7 @@ export default function PostJobPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
+        <Navbar userRole="company" userName={userName} onLogout={handleLogout} />
         <div className="flex items-center justify-center py-12">
           <Spinner />
         </div>
@@ -124,7 +138,7 @@ export default function PostJobPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      <Navbar userRole="company" userName={userName} onLogout={handleLogout} />
       <main className="container mx-auto px-4 py-12">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-foreground mb-2">Post a New Job</h1>

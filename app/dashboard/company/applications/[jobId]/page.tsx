@@ -31,6 +31,7 @@ export default function ApplicationsPage() {
   const [applications, setApplications] = useState<Application[]>([])
   const [job, setJob] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [userName, setUserName] = useState<string | undefined>()
 
   const jobId = params.jobId as string
 
@@ -43,6 +44,14 @@ export default function ApplicationsPage() {
           router.push('/auth/login')
           return
         }
+
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', user.id)
+          .single()
+
+        setUserName(profile?.full_name || user.email || undefined)
 
         // Fetch job
         const { data: jobData } = await supabase
@@ -76,6 +85,11 @@ export default function ApplicationsPage() {
     fetchData()
   }, [jobId, router])
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.push('/')
+  }
+
   const handleStatusChange = async (applicationId: string, newStatus: string) => {
     try {
       const response = await fetch(`/api/applications/${applicationId}`, {
@@ -99,7 +113,7 @@ export default function ApplicationsPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
+        <Navbar userRole="company" userName={userName} onLogout={handleLogout} />
         <div className="flex items-center justify-center py-12">
           <Spinner />
         </div>
@@ -109,7 +123,7 @@ export default function ApplicationsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      <Navbar userRole="company" userName={userName} onLogout={handleLogout} />
       <main className="container mx-auto px-4 py-12">
         <div className="mb-8">
           <Button variant="outline" className="mb-4" onClick={() => router.back()}>

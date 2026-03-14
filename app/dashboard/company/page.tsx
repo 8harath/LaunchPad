@@ -24,6 +24,7 @@ export default function CompanyDashboard() {
   const [company, setCompany] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
+  const [userName, setUserName] = useState<string | undefined>()
 
   useEffect(() => {
     const fetchData = async () => {
@@ -35,6 +36,15 @@ export default function CompanyDashboard() {
           return
         }
         setUser(authUser)
+
+        // Fetch profile for navbar display
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', authUser.id)
+          .single()
+
+        setUserName(profile?.full_name || authUser.email || undefined)
 
         // Fetch company
         const { data: companyData } = await supabase
@@ -63,10 +73,15 @@ export default function CompanyDashboard() {
     fetchData()
   }, [router])
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.push('/')
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
+        <Navbar userRole="company" userName={userName} onLogout={handleLogout} />
         <div className="flex items-center justify-center py-12">
           <Spinner />
         </div>
@@ -77,7 +92,7 @@ export default function CompanyDashboard() {
   if (!company) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
+        <Navbar userRole="company" userName={userName} onLogout={handleLogout} />
         <main className="container mx-auto px-4 py-12 text-center">
           <p className="text-muted-foreground mb-4">Company profile not found</p>
         </main>
@@ -87,7 +102,7 @@ export default function CompanyDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      <Navbar userRole="company" userName={userName} onLogout={handleLogout} />
       <main className="container mx-auto px-4 py-12">
         <div className="mb-8 flex items-center justify-between">
           <div>
