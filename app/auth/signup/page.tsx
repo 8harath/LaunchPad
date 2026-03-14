@@ -91,8 +91,6 @@ export default function SignupPage() {
 
       if (userRole === 'company') {
         router.push('/dashboard/company')
-      } else if (userRole === 'admin') {
-        router.push('/dashboard/company')
       } else {
         router.push('/dashboard/student')
       }
@@ -194,7 +192,6 @@ export default function SignupPage() {
                   <SelectContent>
                     <SelectItem value="student">Student</SelectItem>
                     <SelectItem value="company">Company / Recruiter</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
