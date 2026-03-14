@@ -8,22 +8,24 @@ type BackButtonProps = {
   fallbackHref?: string
   label?: string
   className?: string
+  preferFallback?: boolean
 }
 
 export function BackButton({
   fallbackHref = '/',
   label = 'Back',
   className,
+  preferFallback = false,
 }: BackButtonProps) {
   const router = useRouter()
 
   const handleBack = () => {
-    if (typeof window !== 'undefined' && window.history.length > 1) {
+    if (!preferFallback && typeof window !== 'undefined' && window.history.length > 1) {
       router.back()
       return
     }
 
-    router.push(fallbackHref)
+    router.replace(fallbackHref)
   }
 
   return (

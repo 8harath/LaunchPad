@@ -301,6 +301,7 @@ function ProfilePageContent() {
           <div>
             <BackButton
               fallbackHref={role === 'company' || role === 'admin' ? '/dashboard/company' : '/dashboard/student'}
+              preferFallback={isWelcome}
               className="mb-5 rounded-full"
             />
             <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">

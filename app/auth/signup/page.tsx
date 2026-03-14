@@ -90,7 +90,7 @@ export default function SignupPage() {
         return
       }
 
-      router.push('/profile?welcome=1')
+      router.replace('/profile?welcome=1')
     } catch {
       setError('Failed to create account. Please try again.')
     } finally {
