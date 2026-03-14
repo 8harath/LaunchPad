@@ -82,22 +82,19 @@ export default function SignupPage() {
         password,
       })
 
-      if (signInError) {
+      if (signInError || !signInData.session || !signInData.user) {
         // Account created but login failed — ask user to log in manually
         setSuccess('Account created successfully! Please sign in.')
         setTimeout(() => router.push('/auth/login'), 2000)
         return
       }
 
-      if (signInData.session) {
-        localStorage.setItem('supabase_session', JSON.stringify(signInData.session))
-        localStorage.setItem('supabase_user', JSON.stringify(signInData.user))
-
-        if (userRole === 'company') {
-          router.push('/dashboard/company')
-        } else {
-          router.push('/dashboard/student')
-        }
+      if (userRole === 'company') {
+        router.push('/dashboard/company')
+      } else if (userRole === 'admin') {
+        router.push('/dashboard/company')
+      } else {
+        router.push('/dashboard/student')
       }
     } catch (err) {
       setError('Failed to create account. Please try again.')
