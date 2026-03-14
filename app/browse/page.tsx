@@ -36,9 +36,11 @@ type BrowseJob = {
 }
 
 export default function BrowseJobsPage() {
+  const ALL_JOB_TYPES = '__all_job_types__'
+  const ALL_LOCATIONS = '__all_locations__'
   const [searchQuery, setSearchQuery] = useState('')
-  const [jobType, setJobType] = useState<string>('')
-  const [location, setLocation] = useState<string>('')
+  const [jobType, setJobType] = useState<string>(ALL_JOB_TYPES)
+  const [location, setLocation] = useState<string>(ALL_LOCATIONS)
   const [hasFilters, setHasFilters] = useState(false)
   const [jobs, setJobs] = useState<BrowseJob[]>([])
   const [loading, setLoading] = useState(true)
@@ -67,7 +69,7 @@ export default function BrowseJobsPage() {
         // Fetch jobs from API
         const params = new URLSearchParams()
         if (searchQuery) params.set('title', searchQuery)
-        if (location) params.set('location', location)
+        if (location !== ALL_LOCATIONS) params.set('location', location)
 
         const response = await fetch(`/api/jobs?${params.toString()}`)
         if (response.ok) {
@@ -92,18 +94,18 @@ export default function BrowseJobsPage() {
       job.description.toLowerCase().includes(searchQuery.toLowerCase())
 
     const normalizedJobType = job.job_type || ''
-    const matchesJobType = !jobType || normalizedJobType === jobType
+    const matchesJobType = jobType === ALL_JOB_TYPES || normalizedJobType === jobType
 
     const jobLocation = job.location || ''
-    const matchesLocation = !location || jobLocation.includes(location)
+    const matchesLocation = location === ALL_LOCATIONS || jobLocation.includes(location)
 
     return matchesSearch && matchesJobType && matchesLocation
   })
 
   const handleResetFilters = () => {
     setSearchQuery('')
-    setJobType('')
-    setLocation('')
+    setJobType(ALL_JOB_TYPES)
+    setLocation(ALL_LOCATIONS)
     setHasFilters(false)
     // Jobs will refetch due to effect dependencies
   }
@@ -152,7 +154,7 @@ export default function BrowseJobsPage() {
                       <SelectValue placeholder="Any type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All Types</SelectItem>
+                      <SelectItem value={ALL_JOB_TYPES}>All Types</SelectItem>
                       <SelectItem value="Full-time">Full-time</SelectItem>
                       <SelectItem value="Part-time">Part-time</SelectItem>
                       <SelectItem value="Contract">Contract</SelectItem>
@@ -172,11 +174,11 @@ export default function BrowseJobsPage() {
                       <SelectValue placeholder="Any location" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All Locations</SelectItem>
+                      <SelectItem value={ALL_LOCATIONS}>All Locations</SelectItem>
                       <SelectItem value="Remote">Remote</SelectItem>
-                      <SelectItem value="San Francisco">San Francisco</SelectItem>
-                      <SelectItem value="New York">New York</SelectItem>
-                      <SelectItem value="Los Angeles">Los Angeles</SelectItem>
+                      <SelectItem value="Bengaluru">Bengaluru</SelectItem>
+                      <SelectItem value="Chennai">Chennai</SelectItem>
+                      <SelectItem value="Hyderabad">Hyderabad</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

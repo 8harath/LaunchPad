@@ -13,6 +13,7 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey)
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
+    const jobId = searchParams.get('jobId')
     const title = searchParams.get('title')
     const location = searchParams.get('location')
     const companyId = searchParams.get('companyId')
@@ -22,12 +23,17 @@ export async function GET(request: NextRequest) {
       .select(
         `
         *,
-        companies:company_id(id, name, logo_url, location, industry),
+        companies:company_id(id, name, logo_url, location, industry, description, website, admin_id),
         applications(id, status)
         `,
         { count: 'exact' }
       )
-      .eq('status', 'open')
+
+    if (jobId) {
+      query = query.eq('id', jobId)
+    } else {
+      query = query.eq('status', 'open')
+    }
 
     if (title) {
       query = query.ilike('title', `%${title}%`)
