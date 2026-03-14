@@ -51,7 +51,7 @@ All tables have RLS enabled. Verify in the "Authentication" → "Policies" secti
 
 ### student_profiles
 - Extends profiles for student-specific data
-- Fields: id, university, major, graduation_year, skills, resume_url, github_url, linkedin_url, portfolio_url
+- Fields: id, university, major, graduation_year, date_of_birth, phone, location, current_title, current_company, years_of_experience, experience_summary, skills, preferred_job_types, expected_salary_min, expected_salary_max, resume_url, github_url, linkedin_url, portfolio_url
 - Linked to profiles via foreign key
 
 ### jobs
