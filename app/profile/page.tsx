@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Navbar } from '@/components/navbar'
@@ -15,7 +15,7 @@ import { AVATAR_PRESETS } from '@/lib/avatar-presets'
 
 type ProfileRole = 'student' | 'company' | 'admin' | 'guest'
 
-export default function ProfilePage() {
+function ProfilePageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [loading, setLoading] = useState(true)
@@ -356,5 +356,22 @@ export default function ProfilePage() {
         </div>
       </main>
     </div>
+  )
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background">
+          <Navbar />
+          <div className="flex items-center justify-center py-20">
+            <Spinner />
+          </div>
+        </div>
+      }
+    >
+      <ProfilePageContent />
+    </Suspense>
   )
 }
