@@ -20,6 +20,7 @@ type SignupRequest = {
   password: string
   fullName: string
   role: 'student' | 'company'
+  avatarUrl?: string
   university?: string
   major?: string
   graduationYear?: number
@@ -64,6 +65,7 @@ export async function POST(request: NextRequest) {
           id: userId,
           email,
           full_name: fullName,
+          avatar_url: profileData.avatarUrl || null,
           role,
         },
       ])

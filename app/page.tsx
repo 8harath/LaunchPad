@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { AppLogo } from '@/components/app-logo'
 import {
   ArrowRight,
   BriefcaseBusiness,
@@ -15,15 +16,7 @@ export default function Home() {
     <main className="min-h-screen bg-background">
       <nav className="sticky top-0 z-50 border-b border-border/70 bg-background/85 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-2xl border border-border bg-card shadow-sm">
-              <span className="text-sm font-semibold">LP</span>
-            </div>
-            <div>
-              <div className="text-sm font-semibold text-foreground">LaunchPad</div>
-              <div className="text-xs text-muted-foreground">career operating system</div>
-            </div>
-          </div>
+          <AppLogo />
           <div className="flex gap-2">
             <Link href="/auth/login">
               <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
@@ -48,6 +41,9 @@ export default function Home() {
             </div>
 
             <div className="space-y-5">
+              <div className="reveal-up flex justify-center lg:justify-start">
+                <AppLogo imageClassName="h-16 w-16 rounded-[1.5rem]" />
+              </div>
               <h1 className="reveal-up reveal-up-delay-1 text-5xl font-semibold leading-[0.96] tracking-[-0.04em] text-foreground sm:text-6xl lg:text-7xl">
                 Quietly powerful hiring for hackathon talent.
               </h1>

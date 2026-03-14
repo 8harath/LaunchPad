@@ -112,7 +112,7 @@ BEGIN
   )
   VALUES
     (student_1_id, 'College of Engineering, Guindy', 'Computer Science and Engineering', 2026, ARRAY['React', 'Next.js', 'TypeScript', 'Figma'], 'https://github.com/ananyakk', 'https://www.linkedin.com/in/ananyakk', 'https://ananyakk.dev'),
-    (student_2_id, 'NIT Tiruchirappalli', 'Computer Science and Engineering', 2025, ARRAY['Node.js', 'PostgreSQL', 'Supabase', 'Docker'], 'https://github.com/pranaviyer', 'https://www.linkedin.com/in/pranaviyer', 'https://pranaviyer.dev'),
+    (student_2_id, 'NIT Tiruchirappalli', 'Computer Science and Engineering', 2026, ARRAY['Node.js', 'PostgreSQL', 'Supabase', 'Docker'], 'https://github.com/pranaviyer', 'https://www.linkedin.com/in/pranaviyer', 'https://pranaviyer.dev'),
     (student_3_id, 'Amrita Vishwa Vidyapeetham', 'Information Technology', 2026, ARRAY['Python', 'React', 'Product Design', 'Firebase'], 'https://github.com/keerthananair', 'https://www.linkedin.com/in/keerthananair', 'https://keerthananair.dev')
   ON CONFLICT (id) DO UPDATE
   SET

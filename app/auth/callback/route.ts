@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { AVATAR_PRESETS } from '@/lib/avatar-presets'
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
@@ -40,7 +41,7 @@ export async function GET(request: NextRequest) {
             id: data.user.id,
             email: data.user.email!,
             full_name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || null,
-            avatar_url: data.user.user_metadata?.avatar_url || null,
+            avatar_url: data.user.user_metadata?.avatar_url || AVATAR_PRESETS[0].url,
             role: 'student',
           },
         ])
@@ -54,7 +55,7 @@ export async function GET(request: NextRequest) {
         ])
 
         // Redirect to student dashboard for new users
-        return NextResponse.redirect(new URL('/dashboard/student', requestUrl.origin))
+        return NextResponse.redirect(new URL('/profile?welcome=1', requestUrl.origin))
       }
 
       // Existing user — redirect based on role
