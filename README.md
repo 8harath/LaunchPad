@@ -21,7 +21,7 @@ LaunchPad was created by:
 
 - Bharath K
 - Karthik S Gowda
-- Lakshith S
+- Lakshith S Lokesh
 
 This application was built as part of IBM training focused on designing and delivering practical web applications. The current repository represents a working recruitment platform output from that training, and it is intentionally structured so future batches or reviewers can understand, extend, and iterate on it.
 
