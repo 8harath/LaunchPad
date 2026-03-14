@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import { BackButton } from '@/components/back-button'
 import { AppLogo } from '@/components/app-logo'
 
@@ -69,10 +68,9 @@ export default function DocumentationPage() {
               analytics, and platform governance.
             </p>
             <p className="mt-4">
-              Full repository documentation lives in{' '}
-              <Link href="https://github.com/8harath/LaunchPad" className="text-foreground underline underline-offset-4">
-                the GitHub repository README
-              </Link>.
+              Full repository documentation lives in the repository root
+              <code> README.md </code>
+              file.
             </p>
           </div>
         </div>

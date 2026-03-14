@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { BriefcaseBusiness, Check, IndianRupee, MapPin } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { BackButton } from '@/components/back-button'
 import { Navbar } from '@/components/navbar'
 import { StatusBadge } from '@/components/status-badge'
 import { Button } from '@/components/ui/button'
@@ -43,18 +45,17 @@ export default function JobDetailPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Get current user
-        const { data: { user: authUser } } = await supabase.auth.getUser()
+        const {
+          data: { user: authUser },
+        } = await supabase.auth.getUser()
         setUser(authUser)
 
-        // Fetch job
         const response = await fetch(`/api/jobs?jobId=${jobId}`)
         if (response.ok) {
           const data = await response.json()
           setJob(data.jobs?.[0] || null)
         }
 
-        // Check if user has already applied
         if (authUser) {
           const { data: existingApp } = await supabase
             .from('applications')
@@ -96,7 +97,6 @@ export default function JobDetailPage() {
 
       if (response.ok) {
         setHasApplied(true)
-        // Redirect to dashboard
         setTimeout(() => {
           router.push('/dashboard/student')
         }, 1000)
@@ -124,8 +124,8 @@ export default function JobDetailPage() {
       <div className="min-h-screen bg-background">
         <Navbar />
         <main className="container mx-auto px-4 py-12 text-center">
-          <p className="text-muted-foreground mb-4">Job not found</p>
-          <Button onClick={() => router.back()}>Go Back</Button>
+          <p className="mb-4 text-muted-foreground">Job not found</p>
+          <BackButton fallbackHref="/browse" />
         </main>
       </div>
     )
@@ -135,131 +135,111 @@ export default function JobDetailPage() {
     <div className="min-h-screen bg-background">
       <Navbar />
       <main className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-3 gap-8">
-          <div className="col-span-2">
+        <BackButton fallbackHref="/browse" className="mb-6 rounded-full" />
+
+        <div className="grid gap-8 lg:grid-cols-3">
+          <div className="lg:col-span-2">
             <div className="mb-8">
-              <div className="flex items-start justify-between mb-4">
+              <div className="mb-4 flex items-start justify-between gap-4">
                 <div>
-                  <h1 className="text-4xl font-bold text-foreground mb-2">
-                    {job.title}
-                  </h1>
-                  <p className="text-xl text-muted-foreground">
-                    {job.companies.name}
-                  </p>
+                  <h1 className="mb-2 text-4xl font-bold text-foreground">{job.title}</h1>
+                  <p className="text-xl text-muted-foreground">{job.companies.name}</p>
                 </div>
                 <StatusBadge status={job.status} />
               </div>
 
-              <div className="flex flex-wrap gap-4 mb-6">
-                {job.location && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-foreground">
-                      📍 {job.location}
-                    </span>
-                  </div>
-                )}
-                {job.job_type && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-foreground">
-                      💼 {job.job_type}
-                    </span>
-                  </div>
-                )}
-                {job.salary_min && job.salary_max && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-foreground">
-                      💰 ${job.salary_min.toLocaleString()} - ${job.salary_max.toLocaleString()}
-                    </span>
-                  </div>
-                )}
+              <div className="mb-6 flex flex-wrap gap-4">
+                {job.location ? (
+                  <span className="inline-flex items-center gap-2 text-sm font-medium text-foreground">
+                    <MapPin className="h-4 w-4" />
+                    {job.location}
+                  </span>
+                ) : null}
+                {job.job_type ? (
+                  <span className="inline-flex items-center gap-2 text-sm font-medium text-foreground">
+                    <BriefcaseBusiness className="h-4 w-4" />
+                    {job.job_type}
+                  </span>
+                ) : null}
+                {job.salary_min && job.salary_max ? (
+                  <span className="inline-flex items-center gap-2 text-sm font-medium text-foreground">
+                    <IndianRupee className="h-4 w-4" />
+                    {job.salary_min.toLocaleString()} - {job.salary_max.toLocaleString()}
+                  </span>
+                ) : null}
               </div>
             </div>
 
-            <Card className="p-8 mb-8">
-              <h2 className="text-2xl font-bold text-foreground mb-4">About the Role</h2>
-              <div className="prose prose-invert max-w-none">
-                <p className="text-foreground whitespace-pre-wrap">
-                  {job.description}
-                </p>
-              </div>
+            <Card className="mb-8 p-8">
+              <h2 className="mb-4 text-2xl font-bold text-foreground">About the role</h2>
+              <p className="whitespace-pre-wrap text-foreground">{job.description}</p>
             </Card>
 
-            {job.requirements && job.requirements.length > 0 && (
+            {job.requirements && job.requirements.length > 0 ? (
               <Card className="p-8">
-                <h2 className="text-2xl font-bold text-foreground mb-4">Requirements</h2>
-                <ul className="space-y-2">
+                <h2 className="mb-4 text-2xl font-bold text-foreground">Requirements</h2>
+                <ul className="space-y-3">
                   {job.requirements.map((req, index) => (
                     <li key={index} className="flex items-start gap-3">
-                      <span className="text-accent font-bold mt-1">✓</span>
+                      <Check className="mt-1 h-4 w-4 text-accent" />
                       <span className="text-foreground">{req}</span>
                     </li>
                   ))}
                 </ul>
               </Card>
-            )}
+            ) : null}
 
-            {job.companies.description && (
-              <Card className="p-8 mt-8">
-                <h2 className="text-2xl font-bold text-foreground mb-4">About {job.companies.name}</h2>
+            {job.companies.description ? (
+              <Card className="mt-8 p-8">
+                <h2 className="mb-4 text-2xl font-bold text-foreground">About {job.companies.name}</h2>
                 <p className="text-foreground">{job.companies.description}</p>
               </Card>
-            )}
+            ) : null}
           </div>
 
           <div>
-            <Card className="p-8 sticky top-4">
+            <Card className="sticky top-6 p-8">
               <div className="mb-6">
-                {job.companies.logo_url && (
+                {job.companies.logo_url ? (
                   <img
                     src={job.companies.logo_url}
                     alt={job.companies.name}
-                    className="w-full mb-4 rounded"
+                    className="mb-4 w-full rounded"
                   />
-                )}
-                <h3 className="text-lg font-bold text-foreground mb-2">
-                  {job.companies.name}
-                </h3>
-                {job.companies.website && (
+                ) : null}
+                <h3 className="mb-2 text-lg font-bold text-foreground">{job.companies.name}</h3>
+                {job.companies.website ? (
                   <a
                     href={job.companies.website}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-primary hover:underline text-sm"
+                    className="text-sm text-primary hover:underline"
                   >
-                    Visit Website
+                    Visit website
                   </a>
-                )}
+                ) : null}
               </div>
 
-              {job.deadline && (
-                <div className="mb-6 p-4 bg-accent/10 rounded-lg">
-                  <p className="text-xs text-muted-foreground mb-1">Application Deadline</p>
+              {job.deadline ? (
+                <div className="mb-6 rounded-lg bg-accent/10 p-4">
+                  <p className="mb-1 text-xs text-muted-foreground">Application deadline</p>
                   <p className="text-sm font-bold text-foreground">
                     {new Date(job.deadline).toLocaleDateString()}
                   </p>
                 </div>
-              )}
+              ) : null}
 
-              <Button
-                onClick={handleApply}
-                disabled={applying || hasApplied}
-                className="w-full"
-                size="lg"
-              >
-                {hasApplied
-                  ? 'Already Applied'
-                  : applying
-                  ? 'Applying...'
-                  : 'Apply Now'}
+              <Button onClick={handleApply} disabled={applying || hasApplied} className="w-full" size="lg">
+                {hasApplied ? 'Already Applied' : applying ? 'Applying...' : 'Apply Now'}
               </Button>
 
-              {!user && (
-                <p className="text-xs text-muted-foreground text-center mt-4">
+              {!user ? (
+                <p className="mt-4 text-center text-xs text-muted-foreground">
                   <Button variant="link" className="h-auto p-0" onClick={() => router.push('/auth/login')}>
                     Sign in to apply
                   </Button>
                 </p>
-              )}
+              ) : null}
             </Card>
           </div>
         </div>

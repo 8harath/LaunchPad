@@ -91,7 +91,7 @@ BEGIN
     (recruiter_3_id, 'recruiter.chargebee@carthik.tech', 'Vignesh Raghavan', 'company', 'Hiring SaaS engineers and interns at Chargebee.'),
     (student_1_id, 'ananya.krishnan@carthik.tech', 'Ananya Krishnan', 'student', 'Final-year CS student focused on frontend engineering.'),
     (student_2_id, 'pranav.iyer@carthik.tech', 'Pranav Iyer', 'student', 'Backend-focused engineering student interested in distributed systems.'),
-    (student_3_id, 'keerthana.nair@carthik.tech', 'Keerthana Nair', 'student', 'Product-minded full-stack developer and hackathon finalist.')
+    (student_3_id, 'keerthana.nair@carthik.tech', 'Keerthana Nair', 'student', 'Product-minded full-stack developer focused on shipping thoughtful user experiences.')
   ON CONFLICT (id) DO UPDATE
   SET
     email = EXCLUDED.email,
@@ -230,7 +230,7 @@ BEGIN
   VALUES
     (job_1_id, student_1_id, 'reviewing', 'I would love to contribute to merchant-facing UI systems and bring strong React and TypeScript skills to Razorpay.', 'Available to join after graduation in June 2026.'),
     (job_2_id, student_3_id, 'pending', 'Freshworks is exactly the kind of product-led company where I want to grow as a frontend engineer.', 'Happy to relocate to Chennai.'),
-    (job_3_id, student_2_id, 'accepted', 'I enjoy backend systems work and have built PostgreSQL-backed services in hackathons and coursework.', 'Interested in backend platform engineering and reliability.'),
+    (job_3_id, student_2_id, 'accepted', 'I enjoy backend systems work and have built PostgreSQL-backed services in internships and coursework.', 'Interested in backend platform engineering and reliability.'),
     (job_4_id, student_1_id, 'pending', 'I enjoy translating data into clear product decisions and would love to learn from Razorpay''s growth teams.', 'Can work full-time during the internship period.')
   ON CONFLICT (job_id, student_id) DO UPDATE
   SET

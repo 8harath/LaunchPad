@@ -1,13 +1,12 @@
 {
-  "name": "my-project",
+  "name": "launchpad",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint .",
-    "seed": "node scripts/seed.mjs"
+    "lint": "eslint ."
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",

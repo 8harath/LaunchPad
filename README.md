@@ -15,6 +15,16 @@ This repository contains the full web application, including:
 
 This README is the single source of documentation for the repository. It is intentionally detailed so that someone opening the repository can understand the platform, architecture, database design, and implementation choices without needing a stack of separate markdown files.
 
+## Project Context
+
+LaunchPad was created by:
+
+- Bharath K
+- Karthik S Gowda
+- Lakshith S
+
+This application was built as part of IBM training focused on designing and delivering practical web applications. The current repository represents a working recruitment platform output from that training, and it is intentionally structured so future batches or reviewers can understand, extend, and iterate on it.
+
 ## Product Summary
 
 LaunchPad supports a full student-to-recruiter hiring workflow:
@@ -26,7 +36,7 @@ LaunchPad supports a full student-to-recruiter hiring workflow:
 5. Recruiters review applications and update statuses.
 6. Students track progress from their dashboard.
 
-The platform is not hackathon-specific. It is a general recruitment platform for students and recruiters.
+The platform is a general recruitment platform for students and recruiters.
 
 ## Roles
 
@@ -96,6 +106,7 @@ Student profile fields:
 - university
 - major
 - graduation year
+- professional headline
 - date of birth
 - phone
 - location
@@ -103,6 +114,10 @@ Student profile fields:
 - current company
 - years of experience
 - experience summary
+- project highlights
+- certifications
+- languages
+- availability / notice period
 - skills
 - preferred job types
 - expected salary min/max
@@ -110,6 +125,10 @@ Student profile fields:
 - GitHub URL
 - LinkedIn URL
 - portfolio URL
+- Twitter / X URL
+- Instagram URL
+- LeetCode URL
+- Devfolio URL
 
 Company profile fields:
 
@@ -161,6 +180,14 @@ Company dashboard:
 - shadcn/ui
 - Supabase Auth
 - Supabase Postgres
+
+### Why This Stack
+
+- Next.js App Router gives a strong foundation for building a modern React application with both client and server boundaries in one repository.
+- TypeScript improves maintainability and makes the data contract between UI, API routes, and Supabase much safer.
+- Tailwind CSS and shadcn/ui help standardize spacing, form controls, cards, and interaction states across the application.
+- Supabase reduces setup overhead by combining authentication, PostgreSQL, SQL migrations, and policy-based data access in one platform.
+- PostgreSQL works well for relational hiring data because users, companies, jobs, and applications are naturally interconnected.
 
 ### Architectural Layers
 
@@ -295,6 +322,7 @@ Key columns:
 - `university`
 - `major`
 - `graduation_year`
+- `headline`
 - `date_of_birth`
 - `phone`
 - `location`
@@ -302,6 +330,10 @@ Key columns:
 - `current_company`
 - `years_of_experience`
 - `experience_summary`
+- `project_highlights`
+- `certifications`
+- `languages`
+- `availability_notice_period`
 - `skills` (`TEXT[]`)
 - `preferred_job_types` (`TEXT[]`)
 - `expected_salary_min`
@@ -310,8 +342,41 @@ Key columns:
 - `github_url`
 - `linkedin_url`
 - `portfolio_url`
+- `twitter_url`
+- `instagram_url`
+- `leetcode_url`
+- `devfolio_url`
 - `created_at`
 - `updated_at`
+
+## Table Relationships
+
+The core relational structure is:
+
+- `auth.users` -> `profiles`
+- `profiles` -> `student_profiles` for student users
+- `profiles` -> `companies.admin_id` for recruiter users
+- `companies` -> `jobs`
+- `jobs` -> `applications`
+- `student_profiles` -> `applications`
+- `profiles` -> `notifications`
+
+In practical terms:
+
+- every authenticated person first exists in Supabase Auth
+- every authenticated person also gets a `profiles` row for application-level identity
+- a recruiter controls one company record through `companies.admin_id`
+- a company can publish many jobs
+- a student can apply to many jobs
+- each application joins one student and one job
+
+This structure makes recruiter dashboards possible because the application can trace:
+
+`recruiter -> company -> jobs -> applications -> student`
+
+It also makes student dashboards straightforward:
+
+`student -> applications -> jobs -> company`
 
 ### `companies`
 
@@ -434,6 +499,41 @@ Current intent:
 - students can insert and read their own applications
 - recruiters can read applications for their own jobs
 
+RLS is important in this project because the frontend talks directly to Supabase for some profile operations. Policies help ensure that even if a malicious client tries to craft a manual request, they still cannot freely write to another user's row.
+
+## Authentication and Password Handling
+
+LaunchPad does not store raw passwords in the `public` schema.
+
+For email and password authentication:
+
+- credentials are managed by Supabase Auth
+- password material is stored as a hash in the managed `auth.users` schema
+- application tables such as `profiles`, `student_profiles`, and `companies` do not contain plaintext passwords
+
+This is an important separation of responsibility:
+
+- Supabase Auth handles identity and session security
+- the `public` schema handles product data
+
+The demo seed script inserts auth users for local or evaluation convenience, but even there the password is inserted in hashed form using PostgreSQL cryptographic helpers rather than as raw plaintext in an application table.
+
+## OAuth and Google Sign-In
+
+Google sign-in is implemented through Supabase OAuth.
+
+High-level flow:
+
+1. The user chooses Google sign-in from the frontend.
+2. Supabase redirects the user to Google's consent screen.
+3. After Google authentication, the browser returns to the application callback route.
+4. The callback route exchanges the code for a Supabase session.
+5. The app ensures a `profiles` row exists.
+6. If needed, it creates a matching `student_profiles` row for onboarding.
+7. The user is redirected into the application, usually to `/profile?welcome=1`.
+
+This approach is simpler and safer than hand-rolling OAuth because session creation, token lifecycle, and provider integration are delegated to Supabase.
+
 ## API Documentation
 
 ### `POST /api/auth/signup`
@@ -471,6 +571,14 @@ Security:
 
 Returns application data enriched with related job, company, and student profile basics.
 
+The response is intentionally enriched so recruiter screens can show:
+
+- student identity
+- academic background
+- experience summary
+- links such as GitHub, LinkedIn, portfolio, LeetCode, and other socials
+- salary preference and availability context
+
 ### `POST /api/applications`
 
 Creates a new application if one does not already exist.
@@ -499,6 +607,8 @@ The seed script creates:
 - jobs
 - applications
 - notifications
+
+The seeded student data is intentionally richer than a minimal demo. It includes academic information, professional context, social and portfolio links, compensation expectations, and summary fields so faculty and reviewers can inspect the full product experience.
 
 ## Environment Variables
 
