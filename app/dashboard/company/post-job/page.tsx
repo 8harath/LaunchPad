@@ -184,7 +184,7 @@ export default function PostJobPage() {
                   name="location"
                   value={formData.location}
                   onChange={handleInputChange}
-                  placeholder="e.g. San Francisco, CA"
+                  placeholder="e.g. Bengaluru, India"
                 />
               </div>
 
@@ -209,27 +209,27 @@ export default function PostJobPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
-                  Salary Min (Optional)
+                  Salary Min in INR (Optional)
                 </label>
                 <Input
                   type="number"
                   name="salaryMin"
                   value={formData.salaryMin}
                   onChange={handleInputChange}
-                  placeholder="e.g. 80000"
+                  placeholder="e.g. 800000"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
-                  Salary Max (Optional)
+                  Salary Max in INR (Optional)
                 </label>
                 <Input
                   type="number"
                   name="salaryMax"
                   value={formData.salaryMax}
                   onChange={handleInputChange}
-                  placeholder="e.g. 120000"
+                  placeholder="e.g. 1400000"
                 />
               </div>
             </div>
