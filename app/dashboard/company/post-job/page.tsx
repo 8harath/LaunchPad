@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { BackButton } from '@/components/back-button'
 import { Navbar } from '@/components/navbar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -136,6 +137,7 @@ export default function PostJobPage() {
       <Navbar userRole="company" userName={userName} onLogout={handleLogout} />
       <main className="container mx-auto px-4 py-12">
         <div className="mb-8">
+          <BackButton fallbackHref="/dashboard/company" className="mb-4 rounded-full" />
           <h1 className="text-4xl font-bold text-foreground mb-2">Post a New Job</h1>
           <p className="text-muted-foreground">
             Fill out the form below to post a new job opportunity

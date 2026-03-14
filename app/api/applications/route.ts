@@ -51,11 +51,11 @@ export async function GET(request: NextRequest) {
         .in('id', jobIds),
       supabase
         .from('student_profiles')
-        .select('id, university')
+        .select('id, university, major, graduation_year, headline, location, current_title, current_company, years_of_experience, experience_summary, project_highlights, certifications, languages, availability_notice_period, skills, preferred_job_types, expected_salary_min, expected_salary_max, resume_url, github_url, linkedin_url, portfolio_url, twitter_url, instagram_url, leetcode_url, devfolio_url')
         .in('id', studentIds),
       supabase
         .from('profiles')
-        .select('id, full_name, email')
+        .select('id, full_name, email, bio, avatar_url')
         .in('id', studentIds),
     ])
 
@@ -115,10 +115,36 @@ export async function GET(request: NextRequest) {
           ? {
               id: studentProfile.id,
               university: studentProfile.university,
+              major: studentProfile.major,
+              graduation_year: studentProfile.graduation_year,
+              headline: studentProfile.headline,
+              location: studentProfile.location,
+              current_title: studentProfile.current_title,
+              current_company: studentProfile.current_company,
+              years_of_experience: studentProfile.years_of_experience,
+              experience_summary: studentProfile.experience_summary,
+              project_highlights: studentProfile.project_highlights,
+              certifications: studentProfile.certifications,
+              languages: studentProfile.languages,
+              availability_notice_period: studentProfile.availability_notice_period,
+              skills: studentProfile.skills,
+              preferred_job_types: studentProfile.preferred_job_types,
+              expected_salary_min: studentProfile.expected_salary_min,
+              expected_salary_max: studentProfile.expected_salary_max,
+              resume_url: studentProfile.resume_url,
+              github_url: studentProfile.github_url,
+              linkedin_url: studentProfile.linkedin_url,
+              portfolio_url: studentProfile.portfolio_url,
+              twitter_url: studentProfile.twitter_url,
+              instagram_url: studentProfile.instagram_url,
+              leetcode_url: studentProfile.leetcode_url,
+              devfolio_url: studentProfile.devfolio_url,
               profiles: profile
                 ? {
                     full_name: profile.full_name,
                     email: profile.email,
+                    bio: profile.bio,
+                    avatar_url: profile.avatar_url,
                   }
                 : null,
             }

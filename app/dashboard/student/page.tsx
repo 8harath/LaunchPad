@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { Navbar } from '@/components/navbar'
 import { StatusBadge } from '@/components/status-badge'
+import { BackButton } from '@/components/back-button'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
@@ -89,6 +90,7 @@ export default function StudentDashboard() {
       <Navbar userRole="student" userName={userName} onLogout={handleLogout} />
       <main className="container mx-auto px-4 py-12">
         <div className="mb-8">
+          <BackButton fallbackHref="/" className="mb-4 rounded-full" />
           <h1 className="text-4xl font-bold text-foreground mb-2">My Applications</h1>
           <p className="text-muted-foreground">
             Track your job applications and their status
