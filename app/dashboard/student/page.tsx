@@ -30,6 +30,7 @@ export default function StudentDashboard() {
   const [applications, setApplications] = useState<Application[]>([])
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
+  const [userName, setUserName] = useState<string | undefined>()
 
   useEffect(() => {
     const fetchData = async () => {
@@ -41,6 +42,15 @@ export default function StudentDashboard() {
           return
         }
         setUser(authUser)
+
+        // Fetch profile for navbar display
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', authUser.id)
+          .single()
+
+        setUserName(profile?.full_name || authUser.email || undefined)
 
         // Fetch applications
         const response = await fetch(`/api/applications?studentId=${authUser.id}`)
@@ -58,10 +68,15 @@ export default function StudentDashboard() {
     fetchData()
   }, [router])
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.push('/')
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
+        <Navbar userRole="student" userName={userName} onLogout={handleLogout} />
         <div className="flex items-center justify-center py-12">
           <Spinner />
         </div>
@@ -71,7 +86,7 @@ export default function StudentDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      <Navbar userRole="student" userName={userName} onLogout={handleLogout} />
       <main className="container mx-auto px-4 py-12">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-foreground mb-2">My Applications</h1>

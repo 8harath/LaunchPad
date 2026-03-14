@@ -15,8 +15,16 @@ export function Navbar({ userRole, userName, onLogout }: NavbarProps) {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="font-semibold text-foreground hover:text-primary transition-colors">
-            LaunchPad
+          <Link
+            href="/"
+            className="flex items-center gap-2 font-semibold text-foreground hover:text-primary transition-colors"
+          >
+            <img
+              src="/favicon-32x32.png"
+              alt="LaunchPad"
+              className="w-6 h-6 rounded"
+            />
+            <span>LaunchPad</span>
           </Link>
 
           {/* Navigation Links */}
@@ -35,7 +43,12 @@ export function Navbar({ userRole, userName, onLogout }: NavbarProps) {
             )}
             {userRole === 'company' && (
               <Link href="/dashboard/company" className="text-muted-foreground hover:text-foreground transition-colors">
-                Dashboard
+                Company dashboard
+              </Link>
+            )}
+            {userRole === 'student' && (
+              <Link href="/browse" className="text-muted-foreground hover:text-foreground transition-colors">
+                Browse jobs
               </Link>
             )}
           </div>
