@@ -45,7 +45,7 @@ export default function Home() {
                 <AppLogo imageClassName="h-16 w-16 rounded-[1.5rem]" />
               </div>
               <h1 className="reveal-up reveal-up-delay-1 text-5xl font-semibold leading-[0.96] tracking-[-0.04em] text-foreground sm:text-6xl lg:text-7xl">
-                Quietly powerful hiring for hackathon talent.
+                Quietly powerful hiring for early-career talent.
               </h1>
               <p className="reveal-up reveal-up-delay-2 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
                 LaunchPad gives students a clear path from projects to interviews, and gives recruiters a calm, structured place to discover promising builders.
@@ -251,7 +251,7 @@ export default function Home() {
           <div className="flex flex-col items-center justify-between gap-8 sm:flex-row">
             <div>
               <h3 className="font-semibold text-foreground">LaunchPad</h3>
-              <p className="text-sm text-muted-foreground">Launch your career at hackathons</p>
+              <p className="text-sm text-muted-foreground">A recruitment platform for students and recruiters</p>
             </div>
             <div className="flex gap-6 text-sm text-muted-foreground">
               <a href="#" className="transition-colors hover:text-foreground">Privacy</a>

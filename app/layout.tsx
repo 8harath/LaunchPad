@@ -3,8 +3,8 @@ import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'LaunchPad - Launch Your Career at Hackathons',
-  description: 'Connect with top companies at hackathons. Find opportunities, showcase your skills, and land your next role with LaunchPad.',
+  title: 'LaunchPad - Recruitment Platform for Students and Recruiters',
+  description: 'Create student and recruiter profiles, publish jobs, apply to roles, and manage hiring workflows with LaunchPad.',
   generator: 'v0.app',
   icons: {
     icon: [
