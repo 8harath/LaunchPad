@@ -75,6 +75,7 @@ export type Database = {
           university: string | null
           major: string | null
           graduation_year: number | null
+          headline: string | null
           date_of_birth: string | null
           phone: string | null
           location: string | null
@@ -82,6 +83,10 @@ export type Database = {
           current_company: string | null
           years_of_experience: number | null
           experience_summary: string | null
+          project_highlights: string | null
+          certifications: string[]
+          languages: string[]
+          availability_notice_period: string | null
           skills: string[]
           preferred_job_types: string[]
           expected_salary_min: number | null
@@ -90,6 +95,10 @@ export type Database = {
           github_url: string | null
           linkedin_url: string | null
           portfolio_url: string | null
+          twitter_url: string | null
+          instagram_url: string | null
+          leetcode_url: string | null
+          devfolio_url: string | null
           created_at: string
           updated_at: string
         }
@@ -98,6 +107,7 @@ export type Database = {
           university?: string | null
           major?: string | null
           graduation_year?: number | null
+          headline?: string | null
           date_of_birth?: string | null
           phone?: string | null
           location?: string | null
@@ -105,6 +115,10 @@ export type Database = {
           current_company?: string | null
           years_of_experience?: number | null
           experience_summary?: string | null
+          project_highlights?: string | null
+          certifications?: string[]
+          languages?: string[]
+          availability_notice_period?: string | null
           skills?: string[]
           preferred_job_types?: string[]
           expected_salary_min?: number | null
@@ -113,6 +127,10 @@ export type Database = {
           github_url?: string | null
           linkedin_url?: string | null
           portfolio_url?: string | null
+          twitter_url?: string | null
+          instagram_url?: string | null
+          leetcode_url?: string | null
+          devfolio_url?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -120,6 +138,7 @@ export type Database = {
           university?: string | null
           major?: string | null
           graduation_year?: number | null
+          headline?: string | null
           date_of_birth?: string | null
           phone?: string | null
           location?: string | null
@@ -127,6 +146,10 @@ export type Database = {
           current_company?: string | null
           years_of_experience?: number | null
           experience_summary?: string | null
+          project_highlights?: string | null
+          certifications?: string[]
+          languages?: string[]
+          availability_notice_period?: string | null
           skills?: string[]
           preferred_job_types?: string[]
           expected_salary_min?: number | null
@@ -135,6 +158,10 @@ export type Database = {
           github_url?: string | null
           linkedin_url?: string | null
           portfolio_url?: string | null
+          twitter_url?: string | null
+          instagram_url?: string | null
+          leetcode_url?: string | null
+          devfolio_url?: string | null
           updated_at?: string
         }
       }

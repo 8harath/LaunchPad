@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Spinner } from '@/components/ui/spinner'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { BackButton } from '@/components/back-button'
 import { AVATAR_PRESETS } from '@/lib/avatar-presets'
 
 type ProfileRole = 'student' | 'company' | 'admin' | 'guest'
@@ -34,6 +35,7 @@ function ProfilePageContent() {
     university: '',
     major: '',
     graduation_year: '',
+    headline: '',
     date_of_birth: '',
     phone: '',
     location: '',
@@ -41,6 +43,10 @@ function ProfilePageContent() {
     current_company: '',
     years_of_experience: '',
     experience_summary: '',
+    project_highlights: '',
+    certifications: '',
+    languages: '',
+    availability_notice_period: '',
     skills: '',
     preferred_job_types: '',
     expected_salary_min: '',
@@ -49,6 +55,10 @@ function ProfilePageContent() {
     github_url: '',
     linkedin_url: '',
     portfolio_url: '',
+    twitter_url: '',
+    instagram_url: '',
+    leetcode_url: '',
+    devfolio_url: '',
   })
   const [companyProfile, setCompanyProfile] = useState({
     name: '',
@@ -104,6 +114,7 @@ function ProfilePageContent() {
               university: studentData.university || '',
               major: studentData.major || '',
               graduation_year: studentData.graduation_year ? String(studentData.graduation_year) : '',
+              headline: studentData.headline || '',
               date_of_birth: studentData.date_of_birth || '',
               phone: studentData.phone || '',
               location: studentData.location || '',
@@ -111,6 +122,10 @@ function ProfilePageContent() {
               current_company: studentData.current_company || '',
               years_of_experience: studentData.years_of_experience ? String(studentData.years_of_experience) : '',
               experience_summary: studentData.experience_summary || '',
+              project_highlights: studentData.project_highlights || '',
+              certifications: (studentData.certifications || []).join(', '),
+              languages: (studentData.languages || []).join(', '),
+              availability_notice_period: studentData.availability_notice_period || '',
               skills: (studentData.skills || []).join(', '),
               preferred_job_types: (studentData.preferred_job_types || []).join(', '),
               expected_salary_min: studentData.expected_salary_min ? String(studentData.expected_salary_min) : '',
@@ -119,6 +134,10 @@ function ProfilePageContent() {
               github_url: studentData.github_url || '',
               linkedin_url: studentData.linkedin_url || '',
               portfolio_url: studentData.portfolio_url || '',
+              twitter_url: studentData.twitter_url || '',
+              instagram_url: studentData.instagram_url || '',
+              leetcode_url: studentData.leetcode_url || '',
+              devfolio_url: studentData.devfolio_url || '',
             })
           }
         }
@@ -187,6 +206,7 @@ function ProfilePageContent() {
             university: studentProfile.university.trim() || null,
             major: studentProfile.major.trim() || null,
             graduation_year: studentProfile.graduation_year ? Number(studentProfile.graduation_year) : null,
+            headline: studentProfile.headline.trim() || null,
             date_of_birth: studentProfile.date_of_birth || null,
             phone: studentProfile.phone.trim() || null,
             location: studentProfile.location.trim() || null,
@@ -194,6 +214,10 @@ function ProfilePageContent() {
             current_company: studentProfile.current_company.trim() || null,
             years_of_experience: studentProfile.years_of_experience ? Number(studentProfile.years_of_experience) : null,
             experience_summary: studentProfile.experience_summary.trim() || null,
+            project_highlights: studentProfile.project_highlights.trim() || null,
+            certifications: studentProfile.certifications.split(',').map((item) => item.trim()).filter(Boolean),
+            languages: studentProfile.languages.split(',').map((item) => item.trim()).filter(Boolean),
+            availability_notice_period: studentProfile.availability_notice_period.trim() || null,
             skills: studentProfile.skills.split(',').map((skill) => skill.trim()).filter(Boolean),
             preferred_job_types: studentProfile.preferred_job_types.split(',').map((jobType) => jobType.trim()).filter(Boolean),
             expected_salary_min: studentProfile.expected_salary_min ? Number(studentProfile.expected_salary_min) : null,
@@ -202,6 +226,10 @@ function ProfilePageContent() {
             github_url: studentProfile.github_url.trim() || null,
             linkedin_url: studentProfile.linkedin_url.trim() || null,
             portfolio_url: studentProfile.portfolio_url.trim() || null,
+            twitter_url: studentProfile.twitter_url.trim() || null,
+            instagram_url: studentProfile.instagram_url.trim() || null,
+            leetcode_url: studentProfile.leetcode_url.trim() || null,
+            devfolio_url: studentProfile.devfolio_url.trim() || null,
             updated_at: new Date().toISOString(),
           })
 
@@ -271,6 +299,10 @@ function ProfilePageContent() {
       <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="mb-10 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
+            <BackButton
+              fallbackHref={role === 'company' || role === 'admin' ? '/dashboard/company' : '/dashboard/student'}
+              className="mb-5 rounded-full"
+            />
             <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">
               {isWelcome ? 'Welcome' : 'Profile'}
             </p>
@@ -356,13 +388,17 @@ function ProfilePageContent() {
                   <div><Label htmlFor="university">University</Label><Input id="university" value={studentProfile.university} onChange={(e) => setStudentProfile((current) => ({ ...current, university: e.target.value }))} className="mt-2" /></div>
                   <div><Label htmlFor="major">Major</Label><Input id="major" value={studentProfile.major} onChange={(e) => setStudentProfile((current) => ({ ...current, major: e.target.value }))} className="mt-2" /></div>
                   <div><Label htmlFor="graduation_year">Graduation year</Label><Input id="graduation_year" type="number" value={studentProfile.graduation_year} onChange={(e) => setStudentProfile((current) => ({ ...current, graduation_year: e.target.value }))} className="mt-2" placeholder="2026" /></div>
+                  <div><Label htmlFor="headline">Professional headline</Label><Input id="headline" value={studentProfile.headline} onChange={(e) => setStudentProfile((current) => ({ ...current, headline: e.target.value }))} className="mt-2" placeholder="Frontend engineer with product instincts" /></div>
                   <div><Label htmlFor="date_of_birth">Date of birth</Label><Input id="date_of_birth" type="date" value={studentProfile.date_of_birth} onChange={(e) => setStudentProfile((current) => ({ ...current, date_of_birth: e.target.value }))} className="mt-2" /></div>
                   <div><Label htmlFor="phone">Phone</Label><Input id="phone" value={studentProfile.phone} onChange={(e) => setStudentProfile((current) => ({ ...current, phone: e.target.value }))} className="mt-2" placeholder="+91 98765 43210" /></div>
                   <div><Label htmlFor="student_location">Location</Label><Input id="student_location" value={studentProfile.location} onChange={(e) => setStudentProfile((current) => ({ ...current, location: e.target.value }))} className="mt-2" placeholder="Chennai, India" /></div>
                   <div><Label htmlFor="current_title">Current title</Label><Input id="current_title" value={studentProfile.current_title} onChange={(e) => setStudentProfile((current) => ({ ...current, current_title: e.target.value }))} className="mt-2" placeholder="Frontend Intern" /></div>
                   <div><Label htmlFor="current_company">Current company</Label><Input id="current_company" value={studentProfile.current_company} onChange={(e) => setStudentProfile((current) => ({ ...current, current_company: e.target.value }))} className="mt-2" placeholder="Campus Labs" /></div>
                   <div><Label htmlFor="years_of_experience">Years of experience</Label><Input id="years_of_experience" type="number" step="0.1" value={studentProfile.years_of_experience} onChange={(e) => setStudentProfile((current) => ({ ...current, years_of_experience: e.target.value }))} className="mt-2" placeholder="1.5" /></div>
+                  <div><Label htmlFor="availability_notice_period">Availability / notice period</Label><Input id="availability_notice_period" value={studentProfile.availability_notice_period} onChange={(e) => setStudentProfile((current) => ({ ...current, availability_notice_period: e.target.value }))} className="mt-2" placeholder="Available immediately" /></div>
                   <div><Label htmlFor="skills">Skills</Label><Input id="skills" value={studentProfile.skills} onChange={(e) => setStudentProfile((current) => ({ ...current, skills: e.target.value }))} className="mt-2" placeholder="React, Supabase, TypeScript" /></div>
+                  <div><Label htmlFor="languages">Languages</Label><Input id="languages" value={studentProfile.languages} onChange={(e) => setStudentProfile((current) => ({ ...current, languages: e.target.value }))} className="mt-2" placeholder="English, Tamil" /></div>
+                  <div><Label htmlFor="certifications">Certifications</Label><Input id="certifications" value={studentProfile.certifications} onChange={(e) => setStudentProfile((current) => ({ ...current, certifications: e.target.value }))} className="mt-2" placeholder="AWS Cloud Practitioner, Google UX Certificate" /></div>
                   <div><Label htmlFor="preferred_job_types">Preferred job types</Label><Input id="preferred_job_types" value={studentProfile.preferred_job_types} onChange={(e) => setStudentProfile((current) => ({ ...current, preferred_job_types: e.target.value }))} className="mt-2" placeholder="Full-time, Internship, Remote" /></div>
                   <div><Label htmlFor="expected_salary_min">Expected salary min</Label><Input id="expected_salary_min" type="number" value={studentProfile.expected_salary_min} onChange={(e) => setStudentProfile((current) => ({ ...current, expected_salary_min: e.target.value }))} className="mt-2" placeholder="800000" /></div>
                   <div><Label htmlFor="expected_salary_max">Expected salary max</Label><Input id="expected_salary_max" type="number" value={studentProfile.expected_salary_max} onChange={(e) => setStudentProfile((current) => ({ ...current, expected_salary_max: e.target.value }))} className="mt-2" placeholder="1400000" /></div>
@@ -370,7 +406,12 @@ function ProfilePageContent() {
                   <div><Label htmlFor="linkedin_url">LinkedIn URL</Label><Input id="linkedin_url" value={studentProfile.linkedin_url} onChange={(e) => setStudentProfile((current) => ({ ...current, linkedin_url: e.target.value }))} className="mt-2" /></div>
                   <div><Label htmlFor="portfolio_url">Portfolio URL</Label><Input id="portfolio_url" value={studentProfile.portfolio_url} onChange={(e) => setStudentProfile((current) => ({ ...current, portfolio_url: e.target.value }))} className="mt-2" /></div>
                   <div><Label htmlFor="resume_url">Resume URL</Label><Input id="resume_url" value={studentProfile.resume_url} onChange={(e) => setStudentProfile((current) => ({ ...current, resume_url: e.target.value }))} className="mt-2" /></div>
+                  <div><Label htmlFor="twitter_url">Twitter / X URL</Label><Input id="twitter_url" value={studentProfile.twitter_url} onChange={(e) => setStudentProfile((current) => ({ ...current, twitter_url: e.target.value }))} className="mt-2" /></div>
+                  <div><Label htmlFor="instagram_url">Instagram URL</Label><Input id="instagram_url" value={studentProfile.instagram_url} onChange={(e) => setStudentProfile((current) => ({ ...current, instagram_url: e.target.value }))} className="mt-2" /></div>
+                  <div><Label htmlFor="leetcode_url">LeetCode URL</Label><Input id="leetcode_url" value={studentProfile.leetcode_url} onChange={(e) => setStudentProfile((current) => ({ ...current, leetcode_url: e.target.value }))} className="mt-2" /></div>
+                  <div><Label htmlFor="devfolio_url">Devfolio URL</Label><Input id="devfolio_url" value={studentProfile.devfolio_url} onChange={(e) => setStudentProfile((current) => ({ ...current, devfolio_url: e.target.value }))} className="mt-2" /></div>
                   <div className="md:col-span-2"><Label htmlFor="experience_summary">Experience summary</Label><Textarea id="experience_summary" value={studentProfile.experience_summary} onChange={(e) => setStudentProfile((current) => ({ ...current, experience_summary: e.target.value }))} className="mt-2 min-h-28" placeholder="Summarize internships, projects, ownership, and measurable outcomes." /></div>
+                  <div className="md:col-span-2"><Label htmlFor="project_highlights">Project highlights</Label><Textarea id="project_highlights" value={studentProfile.project_highlights} onChange={(e) => setStudentProfile((current) => ({ ...current, project_highlights: e.target.value }))} className="mt-2 min-h-28" placeholder="List notable projects, measurable results, technologies, and leadership contributions." /></div>
                 </div>
               </Card>
             ) : null}

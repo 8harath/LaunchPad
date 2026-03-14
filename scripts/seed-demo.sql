@@ -105,6 +105,7 @@ BEGIN
     university,
     major,
     graduation_year,
+    headline,
     date_of_birth,
     phone,
     location,
@@ -112,23 +113,32 @@ BEGIN
     current_company,
     years_of_experience,
     experience_summary,
+    project_highlights,
+    certifications,
+    languages,
+    availability_notice_period,
     skills,
     preferred_job_types,
     expected_salary_min,
     expected_salary_max,
     github_url,
     linkedin_url,
-    portfolio_url
+    portfolio_url,
+    twitter_url,
+    instagram_url,
+    leetcode_url,
+    devfolio_url
   )
   VALUES
-    (student_1_id, 'College of Engineering, Guindy', 'Computer Science and Engineering', 2026, DATE '2004-08-18', '+91 98765 21001', 'Chennai, India', 'Frontend Developer Intern', 'Campus Labs', 1.5, 'Built student-facing web apps, led UI implementation for hackathon teams, and collaborated with founders on product polish.', ARRAY['React', 'Next.js', 'TypeScript', 'Figma'], ARRAY['Full-time', 'Internship'], 900000, 1400000, 'https://github.com/ananyakk', 'https://www.linkedin.com/in/ananyakk', 'https://ananyakk.dev'),
-    (student_2_id, 'NIT Tiruchirappalli', 'Computer Science and Engineering', 2026, DATE '2003-11-02', '+91 98765 21002', 'Tiruchirappalli, India', 'Backend Engineer Intern', 'Finstack Systems', 2.0, 'Worked on APIs, database design, and backend performance tuning with Node.js and PostgreSQL.', ARRAY['Node.js', 'PostgreSQL', 'Supabase', 'Docker'], ARRAY['Full-time', 'Remote'], 1200000, 1800000, 'https://github.com/pranaviyer', 'https://www.linkedin.com/in/pranaviyer', 'https://pranaviyer.dev'),
-    (student_3_id, 'Amrita Vishwa Vidyapeetham', 'Information Technology', 2026, DATE '2004-03-27', '+91 98765 21003', 'Kochi, India', 'Product Engineering Fellow', 'Makers Collective', 1.0, 'Blend of product thinking, frontend engineering, and rapid prototyping across hackathons and student startup projects.', ARRAY['Python', 'React', 'Product Design', 'Firebase'], ARRAY['Internship', 'Contract'], 700000, 1200000, 'https://github.com/keerthananair', 'https://www.linkedin.com/in/keerthananair', 'https://keerthananair.dev')
+    (student_1_id, 'College of Engineering, Guindy', 'Computer Science and Engineering', 2026, 'Frontend engineer focused on polished user interfaces and product execution', DATE '2004-08-18', '+91 98765 21001', 'Chennai, India', 'Frontend Developer Intern', 'Campus Labs', 1.5, 'Built student-facing web apps, led UI implementation for campus product teams, and collaborated with founders on product polish.', 'Delivered multiple responsive dashboards, designed reusable UI systems, and improved onboarding flows for student products.', ARRAY['Google UX Certificate', 'Meta Front-End Developer'], ARRAY['English', 'Tamil'], 'Available within 30 days', ARRAY['React', 'Next.js', 'TypeScript', 'Figma'], ARRAY['Full-time', 'Internship'], 900000, 1400000, 'https://github.com/ananyakk', 'https://www.linkedin.com/in/ananyakk', 'https://ananyakk.dev', 'https://twitter.com/ananyakk', 'https://www.instagram.com/ananyakk', 'https://leetcode.com/ananyakk', 'https://devfolio.co/@ananyakk'),
+    (student_2_id, 'NIT Tiruchirappalli', 'Computer Science and Engineering', 2026, 'Backend engineer interested in distributed systems and reliable APIs', DATE '2003-11-02', '+91 98765 21002', 'Tiruchirappalli, India', 'Backend Engineer Intern', 'Finstack Systems', 2.0, 'Worked on APIs, database design, and backend performance tuning with Node.js and PostgreSQL.', 'Built event-driven backend services, optimized SQL queries, and documented system design decisions for teammates.', ARRAY['AWS Cloud Practitioner', 'Postman API Fundamentals'], ARRAY['English', 'Tamil', 'Hindi'], 'Available within 45 days', ARRAY['Node.js', 'PostgreSQL', 'Supabase', 'Docker'], ARRAY['Full-time', 'Remote'], 1200000, 1800000, 'https://github.com/pranaviyer', 'https://www.linkedin.com/in/pranaviyer', 'https://pranaviyer.dev', 'https://twitter.com/pranaviyer', 'https://www.instagram.com/pranaviyer', 'https://leetcode.com/pranaviyer', 'https://devfolio.co/@pranaviyer'),
+    (student_3_id, 'Amrita Vishwa Vidyapeetham', 'Information Technology', 2026, 'Product-minded full-stack builder with strong prototyping instincts', DATE '2004-03-27', '+91 98765 21003', 'Kochi, India', 'Product Engineering Fellow', 'Makers Collective', 1.0, 'Blend of product thinking, frontend engineering, and rapid prototyping across student startup projects.', 'Shipped MVPs, ran user feedback loops, and combined design thinking with fast implementation across campus initiatives.', ARRAY['Google Project Management', 'Figma Design Systems'], ARRAY['English', 'Malayalam', 'Tamil'], 'Available immediately', ARRAY['Python', 'React', 'Product Design', 'Firebase'], ARRAY['Internship', 'Contract'], 700000, 1200000, 'https://github.com/keerthananair', 'https://www.linkedin.com/in/keerthananair', 'https://keerthananair.dev', 'https://twitter.com/keerthananair', 'https://www.instagram.com/keerthananair', 'https://leetcode.com/keerthananair', 'https://devfolio.co/@keerthananair')
   ON CONFLICT (id) DO UPDATE
   SET
     university = EXCLUDED.university,
     major = EXCLUDED.major,
     graduation_year = EXCLUDED.graduation_year,
+    headline = EXCLUDED.headline,
     date_of_birth = EXCLUDED.date_of_birth,
     phone = EXCLUDED.phone,
     location = EXCLUDED.location,
@@ -136,6 +146,10 @@ BEGIN
     current_company = EXCLUDED.current_company,
     years_of_experience = EXCLUDED.years_of_experience,
     experience_summary = EXCLUDED.experience_summary,
+    project_highlights = EXCLUDED.project_highlights,
+    certifications = EXCLUDED.certifications,
+    languages = EXCLUDED.languages,
+    availability_notice_period = EXCLUDED.availability_notice_period,
     skills = EXCLUDED.skills,
     preferred_job_types = EXCLUDED.preferred_job_types,
     expected_salary_min = EXCLUDED.expected_salary_min,
@@ -143,6 +157,10 @@ BEGIN
     github_url = EXCLUDED.github_url,
     linkedin_url = EXCLUDED.linkedin_url,
     portfolio_url = EXCLUDED.portfolio_url,
+    twitter_url = EXCLUDED.twitter_url,
+    instagram_url = EXCLUDED.instagram_url,
+    leetcode_url = EXCLUDED.leetcode_url,
+    devfolio_url = EXCLUDED.devfolio_url,
     updated_at = now();
 
   INSERT INTO public.companies (

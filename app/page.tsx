@@ -246,24 +246,38 @@ export default function Home() {
         </div>
       </section>
 
-      <footer className="border-t border-border/70 bg-muted/35">
-        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
-          <div className="flex flex-col items-center justify-between gap-8 sm:flex-row">
+      <section className="px-4 pb-20 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <div className="paper grid gap-6 rounded-[2rem] border border-border/80 p-6 md:grid-cols-[0.9fr_1.1fr] md:p-8">
             <div>
-              <h3 className="font-semibold text-foreground">LaunchPad</h3>
-              <p className="text-sm text-muted-foreground">A recruitment platform for students and recruiters</p>
+              <p className="mb-3 text-xs uppercase tracking-[0.22em] text-muted-foreground">Credits</p>
+              <h2 className="text-2xl font-semibold tracking-[-0.03em] text-foreground sm:text-3xl">
+                Built during IBM training by a three-member team.
+              </h2>
             </div>
-            <div className="flex gap-6 text-sm text-muted-foreground">
-              <a href="#" className="transition-colors hover:text-foreground">Privacy</a>
-              <a href="#" className="transition-colors hover:text-foreground">Terms</a>
-              <a href="#" className="transition-colors hover:text-foreground">Contact</a>
+            <div className="space-y-4 text-sm leading-7 text-muted-foreground">
+              <p>
+                LaunchPad was created by Bharath K, Karthik S Gowda, and Lakshith S as part of IBM training focused on building practical web applications.
+              </p>
+              <p>
+                The platform is designed as a recruitment system for students and recruiters, and it is intentionally structured so it can be extended further with better matching, resume storage, interview workflows, and analytics in future iterations.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Link href="/documentation">
+                  <Button variant="outline" className="rounded-full">
+                    Read documentation
+                  </Button>
+                </Link>
+                <Link href="/privacy">
+                  <Button variant="ghost" className="rounded-full">
+                    Privacy and policies
+                  </Button>
+                </Link>
+              </div>
             </div>
-          </div>
-          <div className="mt-12 border-t border-border/40 pt-8 text-center text-sm text-muted-foreground">
-            <p>Copyright 2026 LaunchPad. All rights reserved.</p>
           </div>
         </div>
-      </footer>
+      </section>
     </main>
   )
 }
