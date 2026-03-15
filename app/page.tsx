@@ -1,6 +1,8 @@
 'use client'
 
-import { CheckCircle2, Loader2, TriangleAlert } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { CheckCircle2, Loader2, MoonStar, Sparkles, SunMedium, TriangleAlert } from 'lucide-react'
+import { useTheme } from 'next-themes'
 
 const pipelineCards = [
   {
@@ -21,15 +23,39 @@ const pipelineCards = [
 ]
 
 export default function Home() {
+  const { theme, setTheme, resolvedTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const isDark = (theme === 'system' ? resolvedTheme : theme) === 'dark'
+
   return (
-    <main className="ui-shell">
+    <main className="ui-shell" data-theme={isDark ? 'dark' : 'light'}>
       <section className="ui-main-content fade-in-up">
         <header className="ui-header">
-          <p className="ui-kicker">LaunchPad workspace</p>
-          <h1>Modern recruitment dashboard</h1>
-          <p>
-            A clean interface with responsive cards, motion-rich interactions, and clear feedback states for hiring workflows.
-          </p>
+          <div className="ui-header-row">
+            <div>
+              <p className="ui-kicker">LaunchPad workspace</p>
+              <h1>Version-3 recruitment dashboard</h1>
+              <p>
+                Modern, friendly hiring experience with smooth interactions, clear motion feedback, and polished dark/light themes.
+              </p>
+            </div>
+
+            <button
+              className="theme-toggle"
+              type="button"
+              onClick={() => setTheme(isDark ? 'light' : 'dark')}
+              aria-label="Toggle theme"
+              title="Toggle dark or light theme"
+            >
+              {mounted && isDark ? <SunMedium className="icon-pop" size={18} /> : <MoonStar className="icon-pop" size={18} />}
+              <span>{mounted ? (isDark ? 'Light mode' : 'Dark mode') : 'Theme'}</span>
+            </button>
+          </div>
         </header>
 
         <div className="ui-card-grid">
@@ -44,14 +70,17 @@ export default function Home() {
 
         <div className="ui-actions">
           <button className="btn-primary" type="button">
+            <Sparkles size={15} className="symbol-pop" />
             Create job post
           </button>
           <button className="btn-primary" type="button">
+            <Sparkles size={15} className="symbol-pop" />
             Review applications
           </button>
         </div>
 
         <button className="btn-action pulse-animation" type="button">
+          <Sparkles size={16} className="symbol-pop" />
           Launch matching workflow
         </button>
 
