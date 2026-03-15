@@ -695,7 +695,10 @@ MIT
 
 ## Automated Vercel Deployment (Version-3)
 
-This repository includes a GitHub Actions workflow at `.github/workflows/vercel-deploy.yml` that deploys to Vercel on pushes to `main` and `work`.
+This repository includes a GitHub Actions workflow at `.github/workflows/vercel-deploy.yml` that deploys to Vercel:
+
+- pushes to `main`/`work` → **production deployment**
+- pull requests into `main`/`work` → **preview deployment**
 
 ### Required GitHub repository secrets
 Set these in **GitHub → Settings → Secrets and variables → Actions**:
@@ -704,5 +707,9 @@ Set these in **GitHub → Settings → Secrets and variables → Actions**:
 - `VERCEL_ORG_ID`
 - `VERCEL_PROJECT_ID`
 
-Once configured, every push to `main` or `work` will publish a production deployment and print the live URL in workflow logs.
+### What you will see
+
+- A deployment URL in the workflow job summary.
+- For pull requests, an automatic PR comment with the preview link.
+- For pushes to `main`/`work`, a production URL that can be used as your public Version-3 link.
 

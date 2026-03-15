@@ -3,8 +3,12 @@ name: Deploy Version-3 to Vercel
 on:
   push:
     branches:
-      - work
       - main
+      - work
+  pull_request:
+    branches:
+      - main
+      - work
   workflow_dispatch:
 
 concurrency:
@@ -17,10 +21,17 @@ jobs:
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Validate required secrets
+        run: |
+          test -n "$VERCEL_TOKEN" || (echo "Missing VERCEL_TOKEN" && exit 1)
+          test -n "$VERCEL_ORG_ID" || (echo "Missing VERCEL_ORG_ID" && exit 1)
+          test -n "$VERCEL_PROJECT_ID" || (echo "Missing VERCEL_PROJECT_ID" && exit 1)
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -30,17 +41,47 @@ jobs:
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
 
-      - name: Pull Vercel environment information
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Build project artifacts
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Deploy prebuilt artifacts
+      - name: Pull Vercel environment
         run: |
-          DEPLOYMENT_URL=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
-          echo "deployment_url=$DEPLOYMENT_URL" >> "$GITHUB_OUTPUT"
-        id: deploy
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"
+          else
+            vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+          fi
 
-      - name: Print deployment URL
-        run: echo "✅ Version-3 deployed at ${{ steps.deploy.outputs.deployment_url }}"
+      - name: Build artifacts
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            vercel build --token="$VERCEL_TOKEN"
+          else
+            vercel build --prod --token="$VERCEL_TOKEN"
+          fi
+
+      - name: Deploy artifacts
+        id: deploy
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            DEPLOYMENT_URL=$(vercel deploy --prebuilt --token="$VERCEL_TOKEN")
+          else
+            DEPLOYMENT_URL=$(vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN")
+          fi
+          echo "deployment_url=$DEPLOYMENT_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Publish deployment summary
+        run: |
+          echo "## Vercel Deployment" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Trigger: ${{ github.event_name }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- URL: ${{ steps.deploy.outputs.deployment_url }}" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Comment preview URL on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = `✅ Version-3 preview deployed: ${{ steps.deploy.outputs.deployment_url }}`;
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
