@@ -697,8 +697,8 @@ MIT
 
 This repository includes a GitHub Actions workflow at `.github/workflows/vercel-deploy.yml` that deploys to Vercel:
 
-- pushes to `main`/`work` → **production deployment**
-- pull requests into `main`/`work` → **preview deployment**
+- pushes to `main`/`version-3` → **production deployment**
+- pull requests into `main`/`version-3` → **preview deployment**
 
 ### Required GitHub repository secrets
 Set these in **GitHub → Settings → Secrets and variables → Actions**:
@@ -711,5 +711,5 @@ Set these in **GitHub → Settings → Secrets and variables → Actions**:
 
 - A deployment URL in the workflow job summary.
 - For pull requests, an automatic PR comment with the preview link.
-- For pushes to `main`/`work`, a production URL that can be used as your public Version-3 link.
+- For pushes to `main`/`version-3`, a production URL that can be used as your public Version-3 link.
 
