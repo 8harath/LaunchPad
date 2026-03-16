@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Card } from '@/components/ui/card'
 import { Spinner } from '@/components/ui/spinner'
+import { BriefcaseBusiness, Sparkles } from 'lucide-react'
 
 export default function PostJobPage() {
   const router = useRouter()
@@ -123,7 +124,7 @@ export default function PostJobPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="ambient-page min-h-screen bg-background">
         <Navbar userRole="company" userName={userName} onLogout={handleLogout} />
         <div className="flex items-center justify-center py-12">
           <Spinner />
@@ -133,18 +134,22 @@ export default function PostJobPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="ambient-page min-h-screen bg-background">
       <Navbar userRole="company" userName={userName} onLogout={handleLogout} />
       <main className="container mx-auto px-4 py-12">
-        <div className="mb-8">
+        <div className="page-hero mb-8 rounded-[2rem] border border-border/80 px-6 py-8 sm:px-8">
           <BackButton fallbackHref="/dashboard/company" className="mb-4 rounded-full" />
+          <div className="section-kicker">
+            <Sparkles className="h-3.5 w-3.5" />
+            Recruiter action
+          </div>
           <h1 className="text-4xl font-bold text-foreground mb-2">Post a New Job</h1>
           <p className="text-muted-foreground">
             Fill out the form below to post a new job opportunity
           </p>
         </div>
 
-        <Card className="max-w-2xl p-8">
+        <Card className="max-w-2xl rounded-[2rem] p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">

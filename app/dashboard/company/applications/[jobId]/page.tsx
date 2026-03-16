@@ -8,6 +8,7 @@ import { StatusBadge } from '@/components/status-badge'
 import { BackButton } from '@/components/back-button'
 import { Card } from '@/components/ui/card'
 import { Spinner } from '@/components/ui/spinner'
+import { FileStack, Sparkles, Users } from 'lucide-react'
 
 type Application = {
   id: string
@@ -142,7 +143,7 @@ export default function ApplicationsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="ambient-page min-h-screen bg-background">
         <Navbar userRole="company" userName={userName} onLogout={handleLogout} />
         <div className="flex items-center justify-center py-12">
           <Spinner />
@@ -152,27 +153,62 @@ export default function ApplicationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="ambient-page min-h-screen bg-background">
       <Navbar userRole="company" userName={userName} onLogout={handleLogout} />
       <main className="container mx-auto px-4 py-12">
-        <div className="mb-8">
+        <div className="page-hero mb-8 rounded-[2rem] border border-border/80 px-6 py-8 sm:px-8">
           <BackButton fallbackHref="/dashboard/company" className="mb-4 rounded-full" />
-          <h1 className="mb-2 text-4xl font-bold text-foreground">
-            Applications for {job?.title}
-          </h1>
-          <p className="text-muted-foreground">
-            Total: {applications.length} {applications.length === 1 ? 'application' : 'applications'}
-          </p>
+          <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+            <div>
+              <div className="section-kicker">
+                <Sparkles className="h-3.5 w-3.5" />
+                Candidate review
+              </div>
+              <h1 className="mb-2 mt-4 text-4xl font-bold text-foreground">
+                Applications for {job?.title}
+              </h1>
+              <p className="text-muted-foreground">
+                Review candidates, open supporting links, and update statuses without losing context.
+              </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="metric-tile rounded-[1.5rem] p-4">
+                <div className="icon-chip h-10 w-10">
+                  <Users className="h-4 w-4" />
+                </div>
+                <p className="mt-4 text-2xl font-semibold text-foreground">{applications.length}</p>
+                <p className="mt-1 text-sm text-muted-foreground">total applicants</p>
+              </div>
+              <div className="metric-tile rounded-[1.5rem] p-4">
+                <div className="icon-chip h-10 w-10">
+                  <FileStack className="h-4 w-4" />
+                </div>
+                <p className="mt-4 text-2xl font-semibold text-foreground">
+                  {applications.filter((app) => app.status === 'reviewing').length}
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">in review</p>
+              </div>
+              <div className="metric-tile rounded-[1.5rem] p-4">
+                <div className="icon-chip h-10 w-10">
+                  <Sparkles className="h-4 w-4" />
+                </div>
+                <p className="mt-4 text-2xl font-semibold text-foreground">
+                  {applications.filter((app) => ['accepted', 'offer_extended'].includes(app.status)).length}
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">advanced</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="space-y-4">
           {applications.length === 0 ? (
-            <Card className="p-8 text-center">
+            <Card className="rounded-[1.75rem] p-8 text-center">
               <p className="text-muted-foreground">No applications yet</p>
             </Card>
           ) : (
             applications.map((app) => (
-              <Card key={app.id} className="p-6">
+              <Card key={app.id} className="interactive-card rounded-[1.75rem] p-6">
                 <div className="mb-4 flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-foreground">

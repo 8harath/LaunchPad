@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { BriefcaseBusiness, Check, IndianRupee, MapPin } from 'lucide-react'
+import { BriefcaseBusiness, Check, IndianRupee, MapPin, Sparkles } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { BackButton } from '@/components/back-button'
 import { Navbar } from '@/components/navbar'
@@ -110,7 +110,7 @@ export default function JobDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="ambient-page min-h-screen bg-background">
         <Navbar />
         <div className="flex items-center justify-center py-12">
           <Spinner />
@@ -121,7 +121,7 @@ export default function JobDetailPage() {
 
   if (!job) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="ambient-page min-h-screen bg-background">
         <Navbar />
         <main className="container mx-auto px-4 py-12 text-center">
           <p className="mb-4 text-muted-foreground">Job not found</p>
@@ -132,15 +132,19 @@ export default function JobDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="ambient-page min-h-screen bg-background">
       <Navbar />
       <main className="container mx-auto px-4 py-12">
-        <BackButton fallbackHref="/browse" className="mb-6 rounded-full" />
+        <div className="page-hero mb-8 rounded-[2rem] border border-border/80 px-6 py-8 sm:px-8">
+          <BackButton fallbackHref="/browse" className="mb-6 rounded-full" />
 
-        <div className="grid gap-8 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <div className="mb-8">
-              <div className="mb-4 flex items-start justify-between gap-4">
+          <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
+            <div>
+              <div className="section-kicker">
+                <Sparkles className="h-3.5 w-3.5" />
+                Opportunity details
+              </div>
+              <div className="mt-4 flex items-start justify-between gap-4">
                 <div>
                   <h1 className="mb-2 text-4xl font-bold text-foreground">{job.title}</h1>
                   <p className="text-xl text-muted-foreground">{job.companies.name}</p>
@@ -148,7 +152,7 @@ export default function JobDetailPage() {
                 <StatusBadge status={job.status} />
               </div>
 
-              <div className="mb-6 flex flex-wrap gap-4">
+              <div className="mt-6 flex flex-wrap gap-4">
                 {job.location ? (
                   <span className="inline-flex items-center gap-2 text-sm font-medium text-foreground">
                     <MapPin className="h-4 w-4" />
@@ -169,7 +173,29 @@ export default function JobDetailPage() {
                 ) : null}
               </div>
             </div>
+            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+              <div className="metric-tile rounded-[1.5rem] p-4">
+                <p className="text-sm text-muted-foreground">Role type</p>
+                <p className="mt-3 text-lg font-semibold text-foreground">{job.job_type || 'Not specified'}</p>
+              </div>
+              <div className="metric-tile rounded-[1.5rem] p-4">
+                <p className="text-sm text-muted-foreground">Location</p>
+                <p className="mt-3 text-lg font-semibold text-foreground">{job.location || 'Flexible'}</p>
+              </div>
+              <div className="metric-tile rounded-[1.5rem] p-4">
+                <p className="text-sm text-muted-foreground">Compensation</p>
+                <p className="mt-3 text-lg font-semibold text-foreground">
+                  {job.salary_min && job.salary_max
+                    ? `${job.salary_min.toLocaleString()} - ${job.salary_max.toLocaleString()}`
+                    : 'Discussed later'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
 
+        <div className="grid gap-8 lg:grid-cols-3">
+          <div className="lg:col-span-2">
             <Card className="mb-8 p-8">
               <h2 className="mb-4 text-2xl font-bold text-foreground">About the role</h2>
               <p className="whitespace-pre-wrap text-foreground">{job.description}</p>
