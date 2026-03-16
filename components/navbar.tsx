@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { AppLogo } from '@/components/app-logo'
 import { NotificationCenter } from '@/components/notification-center'
 import { ThemeToggle } from '@/components/theme-toggle'
-import { BriefcaseBusiness, Compass, LayoutDashboard, MessageSquareMore, UserCircle2, Users } from 'lucide-react'
+import { BriefcaseBusiness, Compass, LayoutDashboard, MessageSquareMore, Users } from 'lucide-react'
 
 interface NavbarProps {
   userRole?: string
@@ -78,13 +78,11 @@ export function Navbar({ userRole, userName, avatarUrl, onLogout }: NavbarProps)
           { href: '/messages', label: 'Messages', icon: MessageSquareMore },
           { href: '/browse', label: 'Jobs', icon: Compass },
           { href: '/community', label: 'Community', icon: Users },
-          { href: '/profile', label: 'Profile', icon: UserCircle2 },
         ]
       : [
           { href: '/dashboard/company', label: 'Workspace', icon: LayoutDashboard },
           { href: '/dashboard/company/post-job', label: 'Roles', icon: BriefcaseBusiness },
           { href: '/messages', label: 'Inbox', icon: MessageSquareMore },
-          { href: '/profile', label: 'Profile', icon: UserCircle2 },
         ]
 
   const handleInternalLogout = async () => {
