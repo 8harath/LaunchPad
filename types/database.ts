@@ -230,7 +230,17 @@ export type Database = {
           id: string
           job_id: string
           student_id: string
-          status: 'pending' | 'reviewing' | 'accepted' | 'rejected' | 'offer_extended'
+          status:
+            | 'pending'
+            | 'reviewing'
+            | 'reviewed'
+            | 'shortlisted'
+            | 'interview_scheduled'
+            | 'accepted'
+            | 'rejected'
+            | 'offer_extended'
+            | 'applied'
+            | 'under_review'
           resume_url: string | null
           cover_letter: string | null
           custom_response: string | null
@@ -241,7 +251,17 @@ export type Database = {
           id?: string
           job_id: string
           student_id: string
-          status?: 'pending' | 'reviewing' | 'accepted' | 'rejected' | 'offer_extended'
+          status?:
+            | 'pending'
+            | 'reviewing'
+            | 'reviewed'
+            | 'shortlisted'
+            | 'interview_scheduled'
+            | 'accepted'
+            | 'rejected'
+            | 'offer_extended'
+            | 'applied'
+            | 'under_review'
           resume_url?: string | null
           cover_letter?: string | null
           custom_response?: string | null
@@ -249,7 +269,17 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          status?: 'pending' | 'reviewing' | 'accepted' | 'rejected' | 'offer_extended'
+          status?:
+            | 'pending'
+            | 'reviewing'
+            | 'reviewed'
+            | 'shortlisted'
+            | 'interview_scheduled'
+            | 'accepted'
+            | 'rejected'
+            | 'offer_extended'
+            | 'applied'
+            | 'under_review'
           resume_url?: string | null
           cover_letter?: string | null
           custom_response?: string | null
@@ -263,6 +293,8 @@ export type Database = {
           title: string
           message: string | null
           type: string | null
+          entity_id: string | null
+          action_url: string | null
           read: boolean
           created_at: string
         }
@@ -272,11 +304,133 @@ export type Database = {
           title: string
           message?: string | null
           type?: string | null
+          entity_id?: string | null
+          action_url?: string | null
           read?: boolean
           created_at?: string
         }
         Update: {
+          title?: string
+          message?: string | null
+          type?: string | null
+          entity_id?: string | null
+          action_url?: string | null
           read?: boolean
+        }
+      }
+      messages: {
+        Row: {
+          id: string
+          sender_id: string
+          recipient_id: string
+          job_id: string | null
+          application_id: string | null
+          subject: string | null
+          body: string
+          read: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          sender_id: string
+          recipient_id: string
+          job_id?: string | null
+          application_id?: string | null
+          subject?: string | null
+          body: string
+          read?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          subject?: string | null
+          body?: string
+          read?: boolean
+          updated_at?: string
+        }
+      }
+      company_reviews: {
+        Row: {
+          id: string
+          company_id: string
+          reviewer_name: string
+          reviewer_role: string | null
+          rating: number
+          title: string
+          review: string
+          outcome: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          reviewer_name: string
+          reviewer_role?: string | null
+          rating?: number
+          title: string
+          review: string
+          outcome?: string | null
+          created_at?: string
+        }
+        Update: {
+          reviewer_name?: string
+          reviewer_role?: string | null
+          rating?: number
+          title?: string
+          review?: string
+          outcome?: string | null
+        }
+      }
+      success_stories: {
+        Row: {
+          id: string
+          name: string
+          role: string
+          company: string
+          story: string
+          advice: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          role: string
+          company: string
+          story: string
+          advice?: string | null
+          created_at?: string
+        }
+        Update: {
+          name?: string
+          role?: string
+          company?: string
+          story?: string
+          advice?: string | null
+        }
+      }
+      hiring_insights: {
+        Row: {
+          id: string
+          category: string
+          title: string
+          summary: string
+          takeaway: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          category: string
+          title: string
+          summary: string
+          takeaway?: string | null
+          created_at?: string
+        }
+        Update: {
+          category?: string
+          title?: string
+          summary?: string
+          takeaway?: string | null
         }
       }
       admin_settings: {

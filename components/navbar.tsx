@@ -4,10 +4,12 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { useNotifications } from '@/hooks/use-notifications'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { AppLogo } from '@/components/app-logo'
-import { BriefcaseBusiness, Compass, LayoutDashboard, UserCircle2 } from 'lucide-react'
+import { NotificationCenter } from '@/components/notification-center'
+import { BriefcaseBusiness, Compass, LayoutDashboard, MessageSquareMore, UserCircle2, Users } from 'lucide-react'
 
 interface NavbarProps {
   userRole?: string
@@ -22,6 +24,8 @@ export function Navbar({ userRole, userName, avatarUrl, onLogout }: NavbarProps)
   const [resolvedRole, setResolvedRole] = useState<string | undefined>(userRole)
   const [resolvedName, setResolvedName] = useState<string | undefined>(userName)
   const [resolvedAvatar, setResolvedAvatar] = useState<string | undefined>(avatarUrl || undefined)
+  const [resolvedUserId, setResolvedUserId] = useState<string | undefined>()
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications(resolvedUserId)
 
   useEffect(() => {
     const hydrateNavbar = async () => {
@@ -30,6 +34,8 @@ export function Navbar({ userRole, userName, avatarUrl, onLogout }: NavbarProps)
       } = await supabase.auth.getUser()
 
       if (!user) return
+
+      setResolvedUserId(user.id)
 
       const { data: profile } = await supabase
         .from('profiles')
@@ -69,11 +75,13 @@ export function Navbar({ userRole, userName, avatarUrl, onLogout }: NavbarProps)
       ? [
           { href: '/dashboard/student', label: 'Dashboard', icon: LayoutDashboard },
           { href: '/browse', label: 'Browse jobs', icon: Compass },
+          { href: '/community', label: 'Community', icon: Users },
           { href: '/profile', label: 'Profile', icon: UserCircle2 },
         ]
       : [
           { href: '/dashboard/company', label: 'Company dashboard', icon: LayoutDashboard },
           { href: '/dashboard/company/post-job', label: 'Post role', icon: BriefcaseBusiness },
+          { href: '/messages', label: 'Messages', icon: MessageSquareMore },
           { href: '/profile', label: 'Profile', icon: UserCircle2 },
         ]
 
@@ -118,6 +126,17 @@ export function Navbar({ userRole, userName, avatarUrl, onLogout }: NavbarProps)
           <div className="flex items-center gap-3">
             {displayName ? (
               <>
+                <NotificationCenter
+                  notifications={notifications}
+                  unreadCount={unreadCount}
+                  onMarkAsRead={markAsRead}
+                  onMarkAllAsRead={markAllAsRead}
+                />
+                <Button asChild variant="outline" size="icon" className="rounded-full">
+                  <Link href="/messages">
+                    <MessageSquareMore className="h-4 w-4" />
+                  </Link>
+                </Button>
                 <Link href="/profile" className="hidden items-center gap-3 rounded-full border border-border/80 bg-card/85 px-2 py-1 pr-3 shadow-[0_20px_42px_-30px_color-mix(in_oklab,var(--foreground)_25%,transparent)] sm:flex">
                   <Avatar className="h-8 w-8 border border-border">
                     <AvatarImage src={displayAvatar} alt={displayName} />

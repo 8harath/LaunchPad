@@ -7,6 +7,8 @@ export type Notification = {
   title: string
   message: string | null
   type: string | null
+  entity_id: string | null
+  action_url: string | null
   read: boolean
   created_at: string
 }

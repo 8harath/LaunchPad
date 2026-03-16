@@ -1,33 +1,71 @@
-import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { getAuthorizedUser, serverSupabase } from '@/lib/server-supabase'
+import { normalizeApplicationStatus } from '@/lib/recruitment'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-if (!supabaseUrl || !supabaseServiceKey) {
-  throw new Error('Missing Supabase credentials')
+type CreateApplicationRequest = {
+  jobId: string
+  studentId?: string
+  resumeUrl?: string
+  coverLetter?: string
+  customResponse?: string
 }
-
-const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
 export async function GET(request: NextRequest) {
   try {
+    const { user, error: authError } = await getAuthorizedUser(request)
+
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const searchParams = request.nextUrl.searchParams
     const studentId = searchParams.get('studentId')
     const jobId = searchParams.get('jobId')
 
-    let query = supabase.from('applications').select('*', { count: 'exact' })
+    if (!studentId && !jobId) {
+      return NextResponse.json(
+        { error: 'A studentId or jobId filter is required.' },
+        { status: 400 }
+      )
+    }
+
+    if (studentId && user.id !== studentId) {
+      const { data: ownedCompany } = await serverSupabase
+        .from('companies')
+        .select('id')
+        .eq('admin_id', user.id)
+        .maybeSingle()
+
+      if (!ownedCompany) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
+    }
+
+    if (jobId) {
+      const { data: job, error: jobError } = await serverSupabase
+        .from('jobs')
+        .select('id, company_id, companies:company_id(admin_id)')
+        .eq('id', jobId)
+        .single()
+
+      const ownerId = Array.isArray(job?.companies) ? job?.companies[0]?.admin_id : job?.companies?.admin_id
+
+      if (jobError || !job || ownerId !== user.id) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
+    }
+
+    let query = serverSupabase.from('applications').select('*', { count: 'exact' })
 
     if (studentId) {
       query = query.eq('student_id', studentId)
     }
+
     if (jobId) {
       query = query.eq('job_id', jobId)
     }
 
-    const { data, error, count } = await query
-      .order('created_at', { ascending: false })
-      .limit(100)
+    const { data, error, count } = await query.order('created_at', { ascending: false }).limit(100)
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 })
@@ -45,15 +83,15 @@ export async function GET(request: NextRequest) {
       { data: studentProfiles, error: studentProfilesError },
       { data: profiles, error: profilesError },
     ] = await Promise.all([
-      supabase
+      serverSupabase
         .from('jobs')
-        .select('id, title, company_id')
+        .select('id, title, company_id, location, job_type, salary_min, salary_max, deadline, status')
         .in('id', jobIds),
-      supabase
+      serverSupabase
         .from('student_profiles')
         .select('id, university, major, graduation_year, headline, location, current_title, current_company, years_of_experience, experience_summary, project_highlights, certifications, languages, availability_notice_period, skills, preferred_job_types, expected_salary_min, expected_salary_max, resume_url, github_url, linkedin_url, portfolio_url, twitter_url, instagram_url, leetcode_url, devfolio_url')
         .in('id', studentIds),
-      supabase
+      serverSupabase
         .from('profiles')
         .select('id, full_name, email, bio, avatar_url')
         .in('id', studentIds),
@@ -73,9 +111,9 @@ export async function GET(request: NextRequest) {
     }
 
     const companyIds = [...new Set((jobs || []).map((job) => job.company_id))]
-    const { data: companies, error: companiesError } = await supabase
+    const { data: companies, error: companiesError } = await serverSupabase
       .from('companies')
-      .select('id, name, logo_url')
+      .select('id, name, logo_url, location, industry, website, size')
       .in('id', companyIds)
 
     if (companiesError) {
@@ -84,9 +122,7 @@ export async function GET(request: NextRequest) {
 
     const jobsById = new Map((jobs || []).map((job) => [job.id, job]))
     const companiesById = new Map((companies || []).map((company) => [company.id, company]))
-    const studentProfilesById = new Map(
-      (studentProfiles || []).map((profile) => [profile.id, profile])
-    )
+    const studentProfilesById = new Map((studentProfiles || []).map((profile) => [profile.id, profile]))
     const profilesById = new Map((profiles || []).map((profile) => [profile.id, profile]))
 
     const applications = data.map((application) => {
@@ -97,16 +133,27 @@ export async function GET(request: NextRequest) {
 
       return {
         ...application,
+        status: normalizeApplicationStatus(application.status),
         jobs: job
           ? {
               id: job.id,
               title: job.title,
               company_id: job.company_id,
+              location: job.location,
+              job_type: job.job_type,
+              salary_min: job.salary_min,
+              salary_max: job.salary_max,
+              deadline: job.deadline,
+              status: job.status,
               companies: company
                 ? {
                     id: company.id,
                     name: company.name,
                     logo_url: company.logo_url,
+                    location: company.location,
+                    industry: company.industry,
+                    website: company.website,
+                    size: company.size,
                   }
                 : null,
             }
@@ -155,58 +202,66 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ applications, count: count || applications.length })
   } catch (error) {
     console.error('Error fetching applications:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
-}
-
-type CreateApplicationRequest = {
-  jobId: string
-  studentId: string
-  resumeUrl?: string
-  coverLetter?: string
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const body: CreateApplicationRequest = await request.json()
-    const { jobId, studentId, resumeUrl, coverLetter } = body
+    const { user, error: authError } = await getAuthorizedUser(request)
 
-    // Validate required fields
-    if (!jobId || !studentId) {
-      return NextResponse.json(
-        { error: 'Job ID and Student ID are required' },
-        { status: 400 }
-      )
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Check if application already exists
-    const { data: existingApp } = await supabase
+    const body: CreateApplicationRequest = await request.json()
+    const { jobId, resumeUrl, coverLetter, customResponse } = body
+
+    if (!jobId) {
+      return NextResponse.json({ error: 'Job ID is required' }, { status: 400 })
+    }
+
+    const { data: job, error: jobError } = await serverSupabase
+      .from('jobs')
+      .select('id, title, company_id, companies:company_id(admin_id, name)')
+      .eq('id', jobId)
+      .single()
+
+    if (jobError || !job) {
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 })
+    }
+
+    const { data: studentProfile } = await serverSupabase
+      .from('student_profiles')
+      .select('id, resume_url')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    if (!studentProfile) {
+      return NextResponse.json({ error: 'Only students can apply for jobs.' }, { status: 403 })
+    }
+
+    const { data: existingApp } = await serverSupabase
       .from('applications')
       .select('id')
       .eq('job_id', jobId)
-      .eq('student_id', studentId)
-      .single()
+      .eq('student_id', user.id)
+      .maybeSingle()
 
     if (existingApp) {
-      return NextResponse.json(
-        { error: 'You have already applied to this job' },
-        { status: 409 }
-      )
+      return NextResponse.json({ error: 'You have already applied to this job' }, { status: 409 })
     }
 
-    // Create application
-    const { data, error } = await supabase
+    const { data, error } = await serverSupabase
       .from('applications')
       .insert([
         {
           job_id: jobId,
-          student_id: studentId,
-          resume_url: resumeUrl || null,
+          student_id: user.id,
+          resume_url: resumeUrl || studentProfile.resume_url || null,
           cover_letter: coverLetter || null,
-          status: 'pending',
+          custom_response: customResponse || null,
+          status: 'applied',
         },
       ])
       .select('*')
@@ -216,40 +271,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
-    // Create notification for company
-    const { data: job } = await supabase
-      .from('jobs')
-      .select('company_id')
-      .eq('id', jobId)
-      .single()
+    const companyRelation = Array.isArray(job.companies) ? job.companies[0] : job.companies
 
-    if (job) {
-      const { data: company } = await supabase
-        .from('companies')
-        .select('admin_id')
-        .eq('id', job.company_id)
-        .single()
-
-      if (company) {
-        await supabase
-          .from('notifications')
-          .insert([
-            {
-              user_id: company.admin_id,
-              title: 'New Application',
-              message: `A student has applied to your job posting`,
-              type: 'new_application',
-            },
-          ])
-      }
+    if (companyRelation?.admin_id) {
+      await serverSupabase.from('notifications').insert([
+        {
+          user_id: companyRelation.admin_id,
+          title: 'New application received',
+          message: `A student applied for ${job.title}.`,
+          type: 'new_application',
+          entity_id: data.id,
+          action_url: `/dashboard/company/applications/${jobId}`,
+        },
+      ])
     }
 
-    return NextResponse.json(data, { status: 201 })
+    return NextResponse.json({ ...data, status: normalizeApplicationStatus(data.status) }, { status: 201 })
   } catch (error) {
     console.error('Error creating application:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

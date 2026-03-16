@@ -1,14 +1,21 @@
-import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { JOB_STATUS_OPTIONS } from '@/lib/recruitment'
+import { getAuthorizedUser, serverSupabase } from '@/lib/server-supabase'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-if (!supabaseUrl || !supabaseServiceKey) {
-  throw new Error('Missing Supabase credentials')
+type CreateJobRequest = {
+  title: string
+  description: string
+  companyId: string
+  requirements?: string[]
+  salaryMin?: number | null
+  salaryMax?: number | null
+  jobType?: string | null
+  location?: string | null
+  deadline?: string | null
+  status?: string
 }
 
-const supabase = createClient(supabaseUrl, supabaseServiceKey)
+const validJobStatuses = new Set(JOB_STATUS_OPTIONS.map((option) => option.value))
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,12 +25,12 @@ export async function GET(request: NextRequest) {
     const location = searchParams.get('location')
     const companyId = searchParams.get('companyId')
 
-    let query = supabase
+    let query = serverSupabase
       .from('jobs')
       .select(
         `
         *,
-        companies:company_id(id, name, logo_url, location, industry, description, website, admin_id),
+        companies:company_id(id, name, logo_url, location, industry, description, website, size, admin_id),
         applications(id, status)
         `,
         { count: 'exact' }
@@ -31,16 +38,18 @@ export async function GET(request: NextRequest) {
 
     if (jobId) {
       query = query.eq('id', jobId)
-    } else {
+    } else if (!companyId) {
       query = query.eq('status', 'open')
     }
 
     if (title) {
       query = query.ilike('title', `%${title}%`)
     }
+
     if (location) {
       query = query.ilike('location', `%${location}%`)
     }
+
     if (companyId) {
       query = query.eq('company_id', companyId)
     }
@@ -56,27 +65,18 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ jobs: data, count })
   } catch (error) {
     console.error('Error fetching jobs:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
-}
-
-type CreateJobRequest = {
-  title: string
-  description: string
-  companyId: string
-  requirements?: string[]
-  salaryMin?: number
-  salaryMax?: number
-  jobType?: string
-  location?: string
-  deadline?: string
 }
 
 export async function POST(request: NextRequest) {
   try {
+    const { user, error: authError } = await getAuthorizedUser(request)
+
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const body: CreateJobRequest = await request.json()
     const {
       title,
@@ -88,58 +88,40 @@ export async function POST(request: NextRequest) {
       jobType,
       location,
       deadline,
+      status,
     } = body
 
-    // Verify company exists and user is admin
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader) {
+    if (!title?.trim() || !description?.trim() || !companyId) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
+        { error: 'Title, description, and company are required.' },
+        { status: 400 }
       )
     }
 
-    const token = authHeader.replace('Bearer ', '')
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser(token)
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
-
-    const { data: company, error: companyError } = await supabase
+    const { data: company, error: companyError } = await serverSupabase
       .from('companies')
-      .select('id, admin_id')
+      .select('id, admin_id, name')
       .eq('id', companyId)
       .single()
 
     if (companyError || !company || company.admin_id !== user.id) {
-      return NextResponse.json(
-        { error: 'Forbidden' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    // Create job
-    const { data, error } = await supabase
+    const { data, error } = await serverSupabase
       .from('jobs')
       .insert([
         {
           company_id: companyId,
-          title,
-          description,
+          title: title.trim(),
+          description: description.trim(),
           requirements: requirements || [],
           salary_min: salaryMin || null,
           salary_max: salaryMax || null,
-          job_type: jobType || null,
-          location: location || null,
+          job_type: jobType?.trim() || null,
+          location: location?.trim() || null,
           deadline: deadline || null,
-          status: 'open',
+          status: validJobStatuses.has(status || '') ? (status as 'open' | 'closed' | 'filled') : 'open',
         },
       ])
       .select('*')
@@ -152,9 +134,63 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(data, { status: 201 })
   } catch (error) {
     console.error('Error creating job:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const { user, error: authError } = await getAuthorizedUser(request)
+
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const body = (await request.json()) as CreateJobRequest & { jobId: string }
+    const { jobId, companyId, title, description, requirements, salaryMin, salaryMax, jobType, location, deadline, status } = body
+
+    if (!jobId || !companyId) {
+      return NextResponse.json({ error: 'Job ID and company are required.' }, { status: 400 })
+    }
+
+    const { data: company, error: companyError } = await serverSupabase
+      .from('companies')
+      .select('id, admin_id')
+      .eq('id', companyId)
+      .single()
+
+    if (companyError || !company || company.admin_id !== user.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    const payload = {
+      title: title?.trim(),
+      description: description?.trim(),
+      requirements: requirements || [],
+      salary_min: salaryMin || null,
+      salary_max: salaryMax || null,
+      job_type: jobType?.trim() || null,
+      location: location?.trim() || null,
+      deadline: deadline || null,
+      status: validJobStatuses.has(status || '') ? (status as 'open' | 'closed' | 'filled') : 'open',
+      updated_at: new Date().toISOString(),
+    }
+
+    const { data, error } = await serverSupabase
+      .from('jobs')
+      .update(payload)
+      .eq('id', jobId)
+      .eq('company_id', companyId)
+      .select('*')
+      .single()
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+
+    return NextResponse.json(data)
+  } catch (error) {
+    console.error('Error updating job:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

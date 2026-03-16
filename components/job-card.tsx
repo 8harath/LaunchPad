@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowUpRight, BriefcaseBusiness, Clock, MapPin, Users } from 'lucide-react'
+import { ArrowUpRight, BriefcaseBusiness, Clock, IndianRupee, MapPin, Users } from 'lucide-react'
 
 interface JobCardProps {
   id: string
@@ -12,6 +12,8 @@ interface JobCardProps {
   skills: string[]
   applicants?: number
   link?: string
+  salaryLabel?: string
+  deadlineLabel?: string
 }
 
 export function JobCard({
@@ -25,6 +27,8 @@ export function JobCard({
   skills,
   applicants,
   link,
+  salaryLabel,
+  deadlineLabel,
 }: JobCardProps) {
   const displayLink = link || `/browse/${id}`
 
@@ -65,6 +69,18 @@ export function JobCard({
               <div className="flex items-center gap-1">
                 <Users className="w-3.5 h-3.5" />
                 {applicants} applicants
+              </div>
+            ) : null}
+            {salaryLabel ? (
+              <div className="flex items-center gap-1">
+                <IndianRupee className="w-3.5 h-3.5" />
+                {salaryLabel}
+              </div>
+            ) : null}
+            {deadlineLabel ? (
+              <div className="flex items-center gap-1">
+                <Clock className="w-3.5 h-3.5" />
+                Apply by {deadlineLabel}
               </div>
             ) : null}
           </div>

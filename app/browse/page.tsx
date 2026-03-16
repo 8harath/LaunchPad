@@ -22,6 +22,7 @@ import {
 } from 'lucide-react'
 import { DashboardStatCard } from '@/components/dashboard-stat-card'
 import { FilterPanel } from '@/components/filter-panel'
+import { formatSalaryRange } from '@/lib/recruitment'
 
 type BrowseJob = {
   id: string
@@ -29,6 +30,9 @@ type BrowseJob = {
   description: string
   location: string | null
   job_type: string | null
+  salary_min: number | null
+  salary_max: number | null
+  deadline: string | null
   created_at: string
   requirements: string[] | null
   companies: {
@@ -317,6 +321,14 @@ export default function BrowseJobsPage() {
                   postedDate={new Date(job.created_at).toLocaleDateString()}
                   skills={job.requirements || []}
                   applicants={job.applications?.length || 0}
+                  salaryLabel={
+                    job.salary_min || job.salary_max
+                      ? formatSalaryRange(job.salary_min, job.salary_max).replace(/INR\s/g, '')
+                      : undefined
+                  }
+                  deadlineLabel={
+                    job.deadline ? new Date(job.deadline).toLocaleDateString() : undefined
+                  }
                 />
               ))}
             </div>

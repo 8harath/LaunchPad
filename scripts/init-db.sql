@@ -13,6 +13,12 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
+ALTER TYPE public.application_status ADD VALUE IF NOT EXISTS 'reviewed';
+ALTER TYPE public.application_status ADD VALUE IF NOT EXISTS 'shortlisted';
+ALTER TYPE public.application_status ADD VALUE IF NOT EXISTS 'interview_scheduled';
+ALTER TYPE public.application_status ADD VALUE IF NOT EXISTS 'applied';
+ALTER TYPE public.application_status ADD VALUE IF NOT EXISTS 'under_review';
+
 DO $$ BEGIN
   CREATE TYPE public.job_status AS ENUM ('open', 'closed', 'filled');
 EXCEPTION WHEN duplicate_object THEN NULL;
@@ -126,7 +132,53 @@ CREATE TABLE IF NOT EXISTS public.notifications (
   title TEXT NOT NULL,
   message TEXT,
   type TEXT,
+  entity_id UUID,
+  action_url TEXT,
   read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS public.messages (
+  id UUID PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
+  sender_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  recipient_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  job_id UUID REFERENCES public.jobs(id) ON DELETE SET NULL,
+  application_id UUID REFERENCES public.applications(id) ON DELETE SET NULL,
+  subject TEXT,
+  body TEXT NOT NULL,
+  read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS public.company_reviews (
+  id UUID PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
+  company_id UUID NOT NULL REFERENCES public.companies(id) ON DELETE CASCADE,
+  reviewer_name TEXT NOT NULL,
+  reviewer_role TEXT,
+  rating INTEGER NOT NULL DEFAULT 5 CHECK (rating BETWEEN 1 AND 5),
+  title TEXT NOT NULL,
+  review TEXT NOT NULL,
+  outcome TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS public.success_stories (
+  id UUID PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
+  name TEXT NOT NULL,
+  role TEXT NOT NULL,
+  company TEXT NOT NULL,
+  story TEXT NOT NULL,
+  advice TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS public.hiring_insights (
+  id UUID PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
+  category TEXT NOT NULL,
+  title TEXT NOT NULL,
+  summary TEXT NOT NULL,
+  takeaway TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -159,6 +211,8 @@ ALTER TABLE public.student_profiles ADD COLUMN IF NOT EXISTS twitter_url TEXT;
 ALTER TABLE public.student_profiles ADD COLUMN IF NOT EXISTS instagram_url TEXT;
 ALTER TABLE public.student_profiles ADD COLUMN IF NOT EXISTS leetcode_url TEXT;
 ALTER TABLE public.student_profiles ADD COLUMN IF NOT EXISTS devfolio_url TEXT;
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS entity_id UUID;
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS action_url TEXT;
 
 -- Create indexes for better query performance
 CREATE INDEX IF NOT EXISTS idx_profiles_role ON public.profiles(role);
@@ -172,6 +226,10 @@ CREATE INDEX IF NOT EXISTS idx_applications_student_id ON public.applications(st
 CREATE INDEX IF NOT EXISTS idx_applications_status ON public.applications(status);
 CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON public.notifications(user_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_read ON public.notifications(read);
+CREATE INDEX IF NOT EXISTS idx_messages_sender_id ON public.messages(sender_id);
+CREATE INDEX IF NOT EXISTS idx_messages_recipient_id ON public.messages(recipient_id);
+CREATE INDEX IF NOT EXISTS idx_messages_application_id ON public.messages(application_id);
+CREATE INDEX IF NOT EXISTS idx_company_reviews_company_id ON public.company_reviews(company_id);
 
 -- Enable Row Level Security (RLS)
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
@@ -181,6 +239,10 @@ ALTER TABLE public.jobs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.job_details ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.applications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.company_reviews ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.success_stories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.hiring_insights ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.admin_settings ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policy: Profiles - Users can read all profiles, update their own
@@ -229,8 +291,24 @@ CREATE POLICY "Company admins can update application status" ON public.applicati
 
 -- RLS Policy: Notifications - Users can read their own
 CREATE POLICY "Users can read own notifications" ON public.notifications FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "System can insert notifications" ON public.notifications FOR INSERT WITH CHECK (true);
+CREATE POLICY "Users can insert own notifications" ON public.notifications FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own notifications" ON public.notifications FOR UPDATE USING (auth.uid() = user_id);
+
+-- RLS Policy: Messages - participants can read their own conversations
+CREATE POLICY "Participants can read messages" ON public.messages FOR SELECT USING (
+  auth.uid() = sender_id OR auth.uid() = recipient_id
+);
+CREATE POLICY "Participants can insert messages" ON public.messages FOR INSERT WITH CHECK (
+  auth.uid() = sender_id
+);
+CREATE POLICY "Recipients can update read state" ON public.messages FOR UPDATE USING (
+  auth.uid() = recipient_id OR auth.uid() = sender_id
+);
+
+-- RLS Policy: Community content - readable to all authenticated users
+CREATE POLICY "Anyone can read company reviews" ON public.company_reviews FOR SELECT USING (true);
+CREATE POLICY "Anyone can read success stories" ON public.success_stories FOR SELECT USING (true);
+CREATE POLICY "Anyone can read hiring insights" ON public.hiring_insights FOR SELECT USING (true);
 
 -- RLS Policy: Admin Settings - Only admins can read/write
 CREATE POLICY "Only admins can read settings" ON public.admin_settings FOR SELECT USING (

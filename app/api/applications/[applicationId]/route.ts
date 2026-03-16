@@ -1,89 +1,68 @@
-import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { APPLICATION_STATUS_OPTIONS, normalizeApplicationStatus } from '@/lib/recruitment'
+import { getAuthorizedUser, serverSupabase } from '@/lib/server-supabase'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+const validStatuses = new Set(APPLICATION_STATUS_OPTIONS.map((status) => status.value))
 
-if (!supabaseUrl || !supabaseServiceKey) {
-  throw new Error('Missing Supabase credentials')
+const statusMessages: Record<string, string> = {
+  applied: 'Your application has been submitted successfully.',
+  under_review: 'A recruiter is reviewing your application.',
+  shortlisted: 'You have been shortlisted for the next stage.',
+  interview_scheduled: 'Your interview has been scheduled.',
+  accepted: 'Congratulations. You have been accepted for this role.',
+  rejected: 'This application has been closed. Thank you for your interest.',
 }
-
-const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { applicationId: string } }
+  { params }: { params: Promise<{ applicationId: string }> }
 ) {
   try {
-    const body = await request.json()
-    const { status } = body
-
-    if (!status) {
-      return NextResponse.json(
-        { error: 'Status is required' },
-        { status: 400 }
-      )
-    }
-
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
-
-    const token = authHeader.replace('Bearer ', '')
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser(token)
+    const { user, error: authError } = await getAuthorizedUser(request)
 
     if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get application and verify company admin
-    const { data: application, error: fetchError } = await supabase
+    const body = await request.json()
+    const status = normalizeApplicationStatus(body.status)
+
+    if (!validStatuses.has(status)) {
+      return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
+    }
+
+    const { applicationId } = await params
+
+    const { data: application, error: fetchError } = await serverSupabase
       .from('applications')
-      .select('*, jobs(company_id)')
-      .eq('id', params.applicationId)
+      .select('id, student_id, job_id, jobs:job_id(company_id, title)')
+      .eq('id', applicationId)
       .single()
 
     if (fetchError || !application) {
-      return NextResponse.json(
-        { error: 'Application not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Application not found' }, { status: 404 })
     }
 
     const jobRelation = Array.isArray(application.jobs) ? application.jobs[0] : application.jobs
     const companyId = jobRelation?.company_id
 
-    const { data: company, error: companyError } = await supabase
+    const { data: company, error: companyError } = await serverSupabase
       .from('companies')
-      .select('admin_id')
+      .select('admin_id, name')
       .eq('id', companyId)
       .single()
 
     if (companyError || !company || company.admin_id !== user.id) {
-      return NextResponse.json(
-        { error: 'Forbidden' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    // Update application status
-    const { data, error } = await supabase
+    const { data, error } = await serverSupabase
       .from('applications')
       .update({
         status,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', params.applicationId)
+      .eq('id', applicationId)
       .select()
       .single()
 
@@ -91,40 +70,20 @@ export async function PATCH(
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
-    // Create notification for student
-    const { data: student } = await supabase
-      .from('student_profiles')
-      .select('id')
-      .eq('id', application.student_id)
-      .single()
+    await serverSupabase.from('notifications').insert([
+      {
+        user_id: application.student_id,
+        title: `Application update: ${APPLICATION_STATUS_OPTIONS.find((item) => item.value === status)?.label}`,
+        message: statusMessages[status] || `Your application is now ${status.replace(/_/g, ' ')}.`,
+        type: 'application_update',
+        entity_id: applicationId,
+        action_url: '/dashboard/student',
+      },
+    ])
 
-    if (student) {
-      const messageMap: Record<string, string> = {
-        reviewing: 'Your application is being reviewed',
-        accepted: 'Congratulations! Your application was accepted',
-        rejected: 'Thank you for applying. We will keep your profile in mind for future opportunities',
-        offer_extended: 'We are excited to extend an offer to you',
-        pending: 'Your application has been submitted',
-      }
-
-      await supabase
-        .from('notifications')
-        .insert([
-          {
-            user_id: student.id,
-            title: `Application Status Updated: ${status.replace('_', ' ').toUpperCase()}`,
-            message: messageMap[status] || `Your application status has been updated to ${status}`,
-            type: 'application_update',
-          },
-        ])
-    }
-
-    return NextResponse.json(data)
+    return NextResponse.json({ ...data, status: normalizeApplicationStatus(data.status) })
   } catch (error) {
     console.error('Error updating application:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
