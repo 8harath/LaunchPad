@@ -55,6 +55,22 @@ const SORT_OPTIONS = [
   { value: 'title', label: 'Role A-Z' },
 ]
 
+function uniqueNormalizedValues(values: Array<string | null | undefined>) {
+  const map = new Map<string, string>()
+
+  values.forEach((value) => {
+    const trimmed = value?.trim()
+    if (!trimmed) return
+
+    const normalized = trimmed.toLowerCase()
+    if (!map.has(normalized)) {
+      map.set(normalized, trimmed)
+    }
+  })
+
+  return Array.from(map.values()).sort((left, right) => left.localeCompare(right))
+}
+
 export default function BrowseJobsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [jobType, setJobType] = useState<string>(ALL_JOB_TYPES)
@@ -107,13 +123,11 @@ export default function BrowseJobsPage() {
     setSortBy('newest')
   }
 
-  const availableLocations = Array.from(
-    new Set(jobs.map((job) => job.location).filter(Boolean) as string[])
-  ).sort((left, right) => left.localeCompare(right))
+  const availableLocations = uniqueNormalizedValues(jobs.map((job) => job.location))
 
-  const availableIndustries = Array.from(
-    new Set(jobs.map((job) => job.companies?.industry).filter(Boolean) as string[])
-  ).sort((left, right) => left.localeCompare(right))
+  const availableIndustries = uniqueNormalizedValues(
+    jobs.map((job) => job.companies?.industry)
+  )
 
   const visibleJobs = [...jobs]
     .filter((job) => {
