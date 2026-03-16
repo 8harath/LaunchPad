@@ -26,7 +26,7 @@ export function NotificationCenter({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon" className="relative rounded-full">
+        <Button variant="outline" size="icon" className="relative rounded-full text-foreground">
           <Bell className="h-4 w-4" />
           {hasUnread ? (
             <span className="absolute -right-1 -top-1 rounded-full bg-foreground px-1.5 py-0.5 text-[10px] text-background">

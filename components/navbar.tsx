@@ -70,20 +70,20 @@ export function Navbar({ userRole, userName, avatarUrl, onLogout }: NavbarProps)
   const navItems = !displayRole
     ? [
         { href: '/', label: 'Home', icon: LayoutDashboard },
-        { href: '/browse', label: 'Browse jobs', icon: Compass },
+        { href: '/browse', label: 'Jobs', icon: Compass },
       ]
     : displayRole === 'student'
       ? [
           { href: '/dashboard/student', label: 'Dashboard', icon: LayoutDashboard },
           { href: '/messages', label: 'Messages', icon: MessageSquareMore },
-          { href: '/browse', label: 'Browse jobs', icon: Compass },
+          { href: '/browse', label: 'Jobs', icon: Compass },
           { href: '/community', label: 'Community', icon: Users },
           { href: '/profile', label: 'Profile', icon: UserCircle2 },
         ]
       : [
-          { href: '/dashboard/company', label: 'Company dashboard', icon: LayoutDashboard },
-          { href: '/dashboard/company/post-job', label: 'Post role', icon: BriefcaseBusiness },
-          { href: '/messages', label: 'Messages', icon: MessageSquareMore },
+          { href: '/dashboard/company', label: 'Workspace', icon: LayoutDashboard },
+          { href: '/dashboard/company/post-job', label: 'Roles', icon: BriefcaseBusiness },
+          { href: '/messages', label: 'Inbox', icon: MessageSquareMore },
           { href: '/profile', label: 'Profile', icon: UserCircle2 },
         ]
 
@@ -103,7 +103,7 @@ export function Navbar({ userRole, userName, avatarUrl, onLogout }: NavbarProps)
         <div className="flex h-16 items-center justify-between">
           <AppLogo href={logoHref} showWordmark className="shrink-0" />
 
-          <div className="hidden items-center gap-2 rounded-full border border-border/70 bg-card/70 p-1.5 text-sm shadow-[0_18px_36px_-28px_color-mix(in_oklab,var(--foreground)_30%,transparent)] md:flex">
+          <div className="hidden items-center gap-2 rounded-full border border-border/70 bg-card/70 p-1.5 text-sm shadow-[0_18px_36px_-28px_color-mix(in_oklab,var(--foreground)_30%,transparent)] lg:flex">
             {navItems.map((item) => {
               const isActive =
                 pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
@@ -125,7 +125,7 @@ export function Navbar({ userRole, userName, avatarUrl, onLogout }: NavbarProps)
             })}
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {displayName ? (
               <>
                 <ThemeToggle />
@@ -135,7 +135,7 @@ export function Navbar({ userRole, userName, avatarUrl, onLogout }: NavbarProps)
                   onMarkAsRead={markAsRead}
                   onMarkAllAsRead={markAllAsRead}
                 />
-                <Button asChild variant="outline" size="icon" className="rounded-full">
+                <Button asChild variant="outline" size="icon" className="rounded-full text-foreground lg:hidden">
                   <Link href="/messages">
                     <MessageSquareMore className="h-4 w-4" />
                   </Link>
@@ -147,8 +147,16 @@ export function Navbar({ userRole, userName, avatarUrl, onLogout }: NavbarProps)
                   </Avatar>
                   <div className="text-sm leading-tight">
                     <div className="font-medium text-foreground">{displayName}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {displayRole === 'company' || displayRole === 'admin' ? 'Recruiter workspace' : 'Student workspace'}
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span>
+                        {displayRole === 'admin'
+                          ? 'Admin'
+                          : displayRole === 'company'
+                            ? 'Recruiter'
+                            : 'Student'}
+                      </span>
+                      <span className="h-1 w-1 rounded-full bg-muted-foreground/70" />
+                      <span>Workspace</span>
                     </div>
                   </div>
                 </Link>

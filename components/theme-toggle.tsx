@@ -20,7 +20,7 @@ export function ThemeToggle() {
       type="button"
       variant="outline"
       size="sm"
-      className="h-9 rounded-full px-3"
+      className="h-9 rounded-full px-3 text-foreground"
       onClick={() => setTheme(isDark ? 'light' : 'dark')}
       aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
     >
