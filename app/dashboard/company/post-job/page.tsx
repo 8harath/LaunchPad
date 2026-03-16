@@ -75,6 +75,11 @@ function PostJobPageContent() {
             const payload = await response.json()
             const job = payload.jobs?.[0]
 
+            if (job?.companies?.admin_id && job.companies.admin_id !== authUser.id) {
+              router.push('/dashboard/company')
+              return
+            }
+
             if (job) {
               setFormData({
                 title: job.title || '',
