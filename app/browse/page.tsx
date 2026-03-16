@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Search, X } from 'lucide-react'
+import { BriefcaseBusiness, MapPinned, Search, SlidersHorizontal, Sparkles, X } from 'lucide-react'
 
 type BrowseJob = {
   id: string
@@ -111,26 +111,65 @@ export default function BrowseJobsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="ambient-page min-h-screen bg-background">
       <Navbar userRole={userRole} userName={userName} />
 
-      {/* Header */}
-      <section className="border-b border-border/40">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <h1 className="text-4xl font-semibold mb-3 text-foreground">Browse opportunities</h1>
-          <p className="text-muted-foreground">
-            Discover {jobs.length} job opportunities waiting for you
-          </p>
+      <section className="px-4 pt-10 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <div className="page-hero reveal-up rounded-[2rem] border border-border/80 px-6 py-8 sm:px-8 sm:py-10">
+            <div className="relative grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+              <div>
+                <div className="section-kicker">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Explore roles
+                </div>
+                <h1 className="mt-5 text-4xl font-semibold tracking-[-0.04em] text-foreground sm:text-5xl">
+                  Browse opportunities that are <span className="text-gradient">easy to scan and act on</span>.
+                </h1>
+                <p className="mt-4 max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">
+                  Discover current roles, filter quickly, and move from browsing to applying without losing context.
+                </p>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="metric-tile rounded-[1.5rem] p-4">
+                  <div className="icon-chip h-10 w-10">
+                    <BriefcaseBusiness className="h-4 w-4" />
+                  </div>
+                  <p className="mt-4 text-2xl font-semibold text-foreground">{jobs.length}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">roles available</p>
+                </div>
+                <div className="metric-tile rounded-[1.5rem] p-4">
+                  <div className="icon-chip h-10 w-10">
+                    <MapPinned className="h-4 w-4" />
+                  </div>
+                  <p className="mt-4 text-2xl font-semibold text-foreground">
+                    {location === ALL_LOCATIONS ? '4+' : '1'}
+                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">locations in view</p>
+                </div>
+                <div className="metric-tile rounded-[1.5rem] p-4">
+                  <div className="icon-chip h-10 w-10">
+                    <SlidersHorizontal className="h-4 w-4" />
+                  </div>
+                  <p className="mt-4 text-2xl font-semibold text-foreground">{hasFilters ? 'On' : 'Off'}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">filters applied</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-4 gap-8">
-          {/* Sidebar Filters */}
           <aside className="lg:col-span-1">
             <div className="space-y-4 sticky top-24">
               <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-foreground text-sm">Filters</h3>
+                <h3 className="flex items-center gap-2 font-semibold text-foreground text-sm">
+                  <SlidersHorizontal className="h-4 w-4" />
+                  Filters
+                </h3>
                 {hasFilters && (
                   <button
                     onClick={handleResetFilters}
@@ -142,8 +181,7 @@ export default function BrowseJobsPage() {
                 )}
               </div>
 
-              <div className="border border-border/50 rounded-md p-4 space-y-4 bg-muted/20">
-                {/* Job Type Filter */}
+              <div className="paper rounded-[1.5rem] border border-border/80 p-4 space-y-4">
                 <div className="space-y-2">
                   <Label className="text-xs font-medium text-foreground">Job Type</Label>
                   <Select value={jobType} onValueChange={(value) => {
@@ -195,10 +233,13 @@ export default function BrowseJobsPage() {
             </div>
           </aside>
 
-          {/* Main Content */}
           <div className="lg:col-span-3 space-y-6">
-            {/* Search Bar */}
-            <div className="relative">
+            <div className="paper rounded-[1.5rem] border border-border/80 p-4">
+              <div className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
+                <Search className="h-4 w-4" />
+                Search roles
+              </div>
+              <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 type="search"
@@ -208,13 +249,13 @@ export default function BrowseJobsPage() {
                   setSearchQuery(e.target.value)
                   setHasFilters(true)
                 }}
-                className="pl-10 h-10 bg-muted/20 border-border/50 placeholder:text-muted-foreground"
+                  className="h-11 border-border/70 bg-background/85 pl-10 placeholder:text-muted-foreground"
               />
             </div>
+            </div>
 
-            {/* Results */}
             {loading ? (
-              <Card className="p-8 text-center">
+              <Card className="rounded-[1.75rem] p-8 text-center">
                 <p className="text-muted-foreground">Loading jobs...</p>
               </Card>
             ) : filteredJobs.length > 0 ? (
@@ -241,7 +282,10 @@ export default function BrowseJobsPage() {
                 </div>
               </div>
             ) : (
-              <div className="border border-border/50 rounded-md p-12 text-center space-y-4 bg-muted/20">
+              <div className="paper rounded-[1.75rem] border border-border/80 p-12 text-center space-y-4">
+                <div className="mx-auto icon-chip h-14 w-14">
+                  <BriefcaseBusiness className="h-5 w-5" />
+                </div>
                 <div className="space-y-2">
                   <h3 className="font-semibold text-foreground">No jobs found</h3>
                   <p className="text-sm text-muted-foreground">
