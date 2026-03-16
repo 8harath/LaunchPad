@@ -10,6 +10,7 @@ import {
   Compass,
   FileStack,
   Layers3,
+  MessageSquareMore,
   Sparkles,
   Target,
   TrendingUp,
@@ -319,6 +320,36 @@ function StudentHomepage({
 
       <section className="px-4 py-10 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-6xl">
+          <div className="mb-6">
+            <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Workspace</p>
+            <h2 className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-foreground">
+              Jump into the section you need right now.
+            </h2>
+          </div>
+          <div className="mb-10 grid gap-4 md:grid-cols-3">
+            <ActionCard
+              href="/dashboard/student"
+              icon={FileStack}
+              eyebrow="Applications"
+              title="Track your pipeline"
+              description="See every application stage from applied to accepted or rejected."
+            />
+            <ActionCard
+              href="/messages"
+              icon={MessageSquareMore}
+              eyebrow="Messages"
+              title="Talk to recruiters"
+              description="Keep follow-ups, scheduling, and hiring conversations in one inbox."
+            />
+            <ActionCard
+              href="/community"
+              icon={Users}
+              eyebrow="Community"
+              title="Learn from outcomes"
+              description="Read company reviews, success stories, and hiring insights."
+            />
+          </div>
+
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Explore Jobs</p>

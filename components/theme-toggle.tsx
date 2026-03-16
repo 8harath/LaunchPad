@@ -13,7 +13,7 @@ export function ThemeToggle() {
     setMounted(true)
   }, [])
 
-  const isDarth = mounted && theme === 'darth'
+  const isDark = mounted && theme === 'dark'
 
   return (
     <Button
@@ -21,11 +21,11 @@ export function ThemeToggle() {
       variant="outline"
       size="sm"
       className="h-9 rounded-full px-3"
-      onClick={() => setTheme(isDarth ? 'light' : 'darth')}
-      aria-label={isDarth ? 'Switch to light theme' : 'Switch to darth theme'}
+      onClick={() => setTheme(isDark ? 'light' : 'dark')}
+      aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
     >
-      {isDarth ? <SunMedium className="h-4 w-4" /> : <MoonStar className="h-4 w-4" />}
-      <span className="hidden sm:inline">{isDarth ? 'Light' : 'Darth'}</span>
+      {isDark ? <SunMedium className="h-4 w-4" /> : <MoonStar className="h-4 w-4" />}
+      <span className="hidden sm:inline">{isDark ? 'Light' : 'Dark'}</span>
     </Button>
   )
 }

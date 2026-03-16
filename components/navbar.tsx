@@ -75,6 +75,7 @@ export function Navbar({ userRole, userName, avatarUrl, onLogout }: NavbarProps)
     : displayRole === 'student'
       ? [
           { href: '/dashboard/student', label: 'Dashboard', icon: LayoutDashboard },
+          { href: '/messages', label: 'Messages', icon: MessageSquareMore },
           { href: '/browse', label: 'Browse jobs', icon: Compass },
           { href: '/community', label: 'Community', icon: Users },
           { href: '/profile', label: 'Profile', icon: UserCircle2 },

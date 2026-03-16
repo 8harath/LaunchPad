@@ -49,7 +49,7 @@ export default function RootLayout({
           attribute="class"
           defaultTheme="light"
           enableSystem={false}
-          themes={['light', 'darth']}
+          themes={['light', 'dark']}
         >
           {children}
           <SiteFooter />
