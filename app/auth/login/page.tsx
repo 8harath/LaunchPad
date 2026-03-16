@@ -9,6 +9,7 @@ import { Navbar } from '@/components/navbar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { BriefcaseBusiness, ShieldCheck, Sparkles } from 'lucide-react'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -106,19 +107,38 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="ambient-page min-h-screen bg-background">
       <Navbar />
 
       <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
         <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
-          <div className="space-y-6">
-            <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Sign in</p>
+          <div className="page-hero rounded-[2rem] border border-border/80 p-6 sm:p-8">
+            <div className="section-kicker">
+              <Sparkles className="h-3.5 w-3.5" />
+              Sign in
+            </div>
             <h1 className="text-4xl font-semibold tracking-[-0.04em] text-foreground sm:text-5xl">
               Return to a hiring workspace that stays simple.
             </h1>
             <p className="max-w-md text-sm leading-6 text-muted-foreground">
               Students and recruiters come back to the same calm system: fewer distractions, clearer next steps, and profile details that stay in sync.
             </p>
+            <div className="grid gap-3 pt-4">
+              <div className="metric-tile rounded-[1.5rem] p-4">
+                <div className="icon-chip h-10 w-10">
+                  <BriefcaseBusiness className="h-4 w-4" />
+                </div>
+                <p className="mt-4 font-semibold text-foreground">Shared student and recruiter workflows</p>
+                <p className="mt-1 text-sm text-muted-foreground">Pick up where you left off without re-learning the interface.</p>
+              </div>
+              <div className="metric-tile rounded-[1.5rem] p-4">
+                <div className="icon-chip h-10 w-10">
+                  <ShieldCheck className="h-4 w-4" />
+                </div>
+                <p className="mt-4 font-semibold text-foreground">Protected account access</p>
+                <p className="mt-1 text-sm text-muted-foreground">Supabase authentication keeps sessions and profile data secured.</p>
+              </div>
+            </div>
           </div>
 
           <div className="paper rounded-[2rem] border border-border/80 p-6 sm:p-8">

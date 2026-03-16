@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { AVATAR_PRESETS } from '@/lib/avatar-presets'
+import { Sparkles, UserPlus, Users } from 'lucide-react'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -145,19 +146,40 @@ export default function SignupPage() {
   }
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="ambient-page min-h-screen bg-background">
       <Navbar />
 
       <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
         <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr]">
           <div className="space-y-6">
-            <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Join</p>
+            <div className="page-hero rounded-[2rem] border border-border/80 p-6 sm:p-8">
+              <div className="section-kicker">
+                <Sparkles className="h-3.5 w-3.5" />
+                Join
+              </div>
             <h1 className="text-4xl font-semibold tracking-[-0.04em] text-foreground sm:text-5xl">
               Create a calm, recruiter-ready profile from day one.
             </h1>
             <p className="max-w-md text-sm leading-6 text-muted-foreground">
               Pick an avatar, choose your role, and get into a cleaner hiring flow. You can fill in the rest on your profile page right after signup.
             </p>
+              <div className="grid gap-3 pt-4">
+                <div className="metric-tile rounded-[1.5rem] p-4">
+                  <div className="icon-chip h-10 w-10">
+                    <UserPlus className="h-4 w-4" />
+                  </div>
+                  <p className="mt-4 font-semibold text-foreground">Fast onboarding</p>
+                  <p className="mt-1 text-sm text-muted-foreground">Create your account, land on profile setup, and start building credibility immediately.</p>
+                </div>
+                <div className="metric-tile rounded-[1.5rem] p-4">
+                  <div className="icon-chip h-10 w-10">
+                    <Users className="h-4 w-4" />
+                  </div>
+                  <p className="mt-4 font-semibold text-foreground">Built for both sides of hiring</p>
+                  <p className="mt-1 text-sm text-muted-foreground">Students and recruiters enter the same clean product with role-aware flows.</p>
+                </div>
+              </div>
+            </div>
 
             <div className="paper rounded-[2rem] border border-border/80 p-6">
               <p className="mb-4 text-sm font-medium text-foreground">Avatar selection</p>

@@ -13,6 +13,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { BackButton } from '@/components/back-button'
 import { AVATAR_PRESETS } from '@/lib/avatar-presets'
+import { Building2, Sparkles, UserCircle2 } from 'lucide-react'
 
 type ProfileRole = 'student' | 'company' | 'admin' | 'guest'
 
@@ -275,7 +276,7 @@ function ProfilePageContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="ambient-page min-h-screen bg-background">
         <Navbar />
         <div className="flex items-center justify-center py-20">
           <Spinner />
@@ -294,29 +295,32 @@ function ProfilePageContent() {
   const isWelcome = searchParams.get('welcome') === '1'
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="ambient-page min-h-screen bg-background">
       <Navbar userRole={role} userName={userName} avatarUrl={avatarUrl} />
       <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="mb-10 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div>
+        <div className="page-hero mb-10 rounded-[2rem] border border-border/80 px-6 py-8 sm:px-8">
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+            <div>
             <BackButton
               fallbackHref={role === 'company' || role === 'admin' ? '/dashboard/company' : '/dashboard/student'}
               preferFallback={isWelcome}
               className="mb-5 rounded-full"
             />
-            <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">
-              {isWelcome ? 'Welcome' : 'Profile'}
-            </p>
-            <h1 className="mt-2 text-4xl font-semibold tracking-[-0.04em] text-foreground">
-              Build a profile recruiters can actually use.
-            </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
-              Keep it clean, current, and easy to scan. Your details are stored in Supabase and can be updated anytime.
-            </p>
+              <div className="section-kicker">
+                <Sparkles className="h-3.5 w-3.5" />
+                {isWelcome ? 'Welcome' : 'Profile'}
+              </div>
+              <h1 className="mt-2 text-4xl font-semibold tracking-[-0.04em] text-foreground">
+                Build a profile recruiters can actually use.
+              </h1>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
+                Keep it clean, current, and easy to scan. Your details are stored in Supabase and can be updated anytime.
+              </p>
+            </div>
+            <Button onClick={handleSave} disabled={saving} className="rounded-full px-6">
+              {saving ? 'Saving...' : 'Save profile'}
+            </Button>
           </div>
-          <Button onClick={handleSave} disabled={saving} className="rounded-full px-6">
-            {saving ? 'Saving...' : 'Save profile'}
-          </Button>
         </div>
 
         {(message || error) && (
@@ -326,7 +330,7 @@ function ProfilePageContent() {
         )}
 
         <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-          <Card className="paper rounded-[2rem] border border-border/80 p-6">
+          <Card className="interactive-card rounded-[2rem] p-6">
             <div className="mb-6 flex items-center gap-4">
               <Avatar className="h-20 w-20 border border-border">
                 <AvatarImage src={profile.avatar_url} alt={profile.full_name || 'Profile avatar'} />
@@ -362,8 +366,11 @@ function ProfilePageContent() {
           </Card>
 
           <div className="space-y-6">
-            <Card className="paper rounded-[2rem] border border-border/80 p-6">
+            <Card className="rounded-[2rem] p-6">
               <div className="mb-5">
+                <div className="mb-3 icon-chip h-11 w-11">
+                  <UserCircle2 className="h-4.5 w-4.5" />
+                </div>
                 <h2 className="text-xl font-semibold text-foreground">Basics</h2>
                 <p className="mt-1 text-sm text-muted-foreground">Name, short bio, and a profile image that feels like you.</p>
               </div>
@@ -380,8 +387,11 @@ function ProfilePageContent() {
             </Card>
 
             {role === 'student' ? (
-              <Card className="paper rounded-[2rem] border border-border/80 p-6">
+              <Card className="rounded-[2rem] p-6">
                 <div className="mb-5">
+                  <div className="mb-3 icon-chip h-11 w-11">
+                    <Sparkles className="h-4.5 w-4.5" />
+                  </div>
                   <h2 className="text-xl font-semibold text-foreground">Student details</h2>
                   <p className="mt-1 text-sm text-muted-foreground">Keep your academic info, links, and skills easy to scan.</p>
                 </div>
@@ -418,8 +428,11 @@ function ProfilePageContent() {
             ) : null}
 
             {role === 'company' || role === 'admin' ? (
-              <Card className="paper rounded-[2rem] border border-border/80 p-6">
+              <Card className="rounded-[2rem] p-6">
                 <div className="mb-5">
+                  <div className="mb-3 icon-chip h-11 w-11">
+                    <Building2 className="h-4.5 w-4.5" />
+                  </div>
                   <h2 className="text-xl font-semibold text-foreground">Company details</h2>
                   <p className="mt-1 text-sm text-muted-foreground">Add the company details candidates should see before applying.</p>
                 </div>
@@ -445,7 +458,7 @@ export default function ProfilePage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-background">
+        <div className="ambient-page min-h-screen bg-background">
           <Navbar />
           <div className="flex items-center justify-center py-20">
             <Spinner />
