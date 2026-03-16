@@ -1,50 +1,61 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
   ArrowRight,
   BriefcaseBusiness,
-  Building2,
   FileClock,
-  LayoutList,
   SearchCheck,
   Sparkles,
   Users,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { InboxPreview } from '@/components/inbox-preview'
+import { MessageComposer } from '@/components/message-composer'
 import { Navbar } from '@/components/navbar'
 import { StatusBadge } from '@/components/status-badge'
 import { BackButton } from '@/components/back-button'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { DashboardStatCard } from '@/components/dashboard-stat-card'
 import { ActionCard } from '@/components/action-card'
 import { FilterPanel } from '@/components/filter-panel'
+import { APPLICATION_STATUS_OPTIONS, JOB_STATUS_OPTIONS, normalizeApplicationStatus } from '@/lib/recruitment'
 
 type Job = {
   id: string
   title: string
   status: string
   created_at: string
-  applications?: { id: string }[]
+  applications?: { id: string; status: string }[]
 }
 
-const JOB_STATUS_OPTIONS = [
-  { value: 'all', label: 'All jobs' },
-  { value: 'open', label: 'Open roles' },
-  { value: 'closed', label: 'Closed roles' },
-  { value: 'filled', label: 'Filled roles' },
-]
+type ApplicantPreview = {
+  id: string
+  status: string
+  created_at: string
+  job_id: string
+  jobs: {
+    id: string
+    title: string
+    companies: {
+      admin_id: string
+      name: string
+    }
+  }
+  student_profiles: {
+    headline: string | null
+    skills: string[]
+    profiles: {
+      full_name: string
+      email: string
+    } | null
+  } | null
+}
 
 const JOB_SORT_OPTIONS = [
   { value: 'newest', label: 'Newest first' },
@@ -57,6 +68,8 @@ export default function CompanyDashboard() {
   const router = useRouter()
   const [jobs, setJobs] = useState<Job[]>([])
   const [company, setCompany] = useState<any>(null)
+  const [recentApplicants, setRecentApplicants] = useState<ApplicantPreview[]>([])
+  const [messages, setMessages] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [userName, setUserName] = useState<string | undefined>()
   const [searchQuery, setSearchQuery] = useState('')
@@ -69,10 +82,15 @@ export default function CompanyDashboard() {
         const {
           data: { user: authUser },
         } = await supabase.auth.getUser()
+
         if (!authUser) {
           router.push('/auth/login')
           return
         }
+
+        const {
+          data: { session },
+        } = await supabase.auth.getSession()
 
         const { data: profile } = await supabase
           .from('profiles')
@@ -88,17 +106,54 @@ export default function CompanyDashboard() {
           .eq('admin_id', authUser.id)
           .single()
 
-        if (companyData) {
-          setCompany(companyData)
-
-          const response = await fetch(`/api/jobs?companyId=${companyData.id}`)
-          if (response.ok) {
-            const { jobs: jobData } = await response.json()
-            setJobs(jobData || [])
-          }
+        if (!companyData) {
+          setLoading(false)
+          return
         }
+
+        setCompany(companyData)
+
+        const [jobsResponse, messagesResponse] = await Promise.all([
+          fetch(`/api/jobs?companyId=${companyData.id}`),
+          fetch('/api/messages', {
+            headers: { Authorization: `Bearer ${session?.access_token || ''}` },
+          }),
+        ])
+
+        let loadedJobs: Job[] = []
+        if (jobsResponse.ok) {
+          const { jobs: jobData } = await jobsResponse.json()
+          loadedJobs = jobData || []
+          setJobs(loadedJobs)
+        }
+
+        if (messagesResponse.ok) {
+          const payload = await messagesResponse.json()
+          setMessages(payload.messages || [])
+        }
+
+        const applicantResponses = await Promise.all(
+          loadedJobs.slice(0, 6).map((job) =>
+            fetch(`/api/applications?jobId=${job.id}`, {
+              headers: { Authorization: `Bearer ${session?.access_token || ''}` },
+            })
+          )
+        )
+
+        const applicantPayloads = await Promise.all(
+          applicantResponses.map(async (response) => (response.ok ? response.json() : { applications: [] }))
+        )
+
+        const applicants = applicantPayloads
+          .flatMap((payload) => payload.applications || [])
+          .sort(
+            (left: ApplicantPreview, right: ApplicantPreview) =>
+              new Date(right.created_at).getTime() - new Date(left.created_at).getTime()
+          )
+
+        setRecentApplicants(applicants.slice(0, 6))
       } catch (error) {
-        console.error('Error fetching data:', error)
+        console.error('Error fetching recruiter dashboard:', error)
       } finally {
         setLoading(false)
       }
@@ -118,31 +173,87 @@ export default function CompanyDashboard() {
     setSortBy('newest')
   }
 
-  const visibleJobs = [...jobs]
-    .filter((job) => {
-      const normalizedQuery = searchQuery.trim().toLowerCase()
-      const matchesSearch = !normalizedQuery || job.title.toLowerCase().includes(normalizedQuery)
-      const matchesStatus = statusFilter === 'all' || job.status === statusFilter
-      return matchesSearch && matchesStatus
+  const handleJobStatusChange = async (jobId: string, newStatus: string) => {
+    if (!company) {
+      return
+    }
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    const targetJob = jobs.find((job) => job.id === jobId)
+    if (!targetJob) {
+      return
+    }
+
+    const response = await fetch('/api/jobs', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session?.access_token || ''}`,
+      },
+      body: JSON.stringify({
+        jobId,
+        companyId: company.id,
+        title: targetJob.title,
+        description: '',
+        requirements: [],
+        status: newStatus,
+      }),
     })
-    .sort((left, right) => {
-      if (sortBy === 'oldest') {
-        return new Date(left.created_at).getTime() - new Date(right.created_at).getTime()
-      }
-      if (sortBy === 'title') {
-        return left.title.localeCompare(right.title)
-      }
-      if (sortBy === 'applications') {
-        return (right.applications?.length || 0) - (left.applications?.length || 0)
-      }
-      return new Date(right.created_at).getTime() - new Date(left.created_at).getTime()
-    })
+
+    if (response.ok) {
+      setJobs((current) =>
+        current.map((job) => (job.id === jobId ? { ...job, status: newStatus } : job))
+      )
+    }
+  }
+
+  const visibleJobs = useMemo(() => {
+    return [...jobs]
+      .filter((job) => {
+        const normalizedQuery = searchQuery.trim().toLowerCase()
+        const matchesSearch = !normalizedQuery || job.title.toLowerCase().includes(normalizedQuery)
+        const matchesStatus = statusFilter === 'all' || job.status === statusFilter
+        return matchesSearch && matchesStatus
+      })
+      .sort((left, right) => {
+        if (sortBy === 'oldest') {
+          return new Date(left.created_at).getTime() - new Date(right.created_at).getTime()
+        }
+        if (sortBy === 'title') {
+          return left.title.localeCompare(right.title)
+        }
+        if (sortBy === 'applications') {
+          return (right.applications?.length || 0) - (left.applications?.length || 0)
+        }
+        return new Date(right.created_at).getTime() - new Date(left.created_at).getTime()
+      })
+  }, [jobs, searchQuery, sortBy, statusFilter])
 
   const totalApplications = jobs.reduce((total, job) => total + (job.applications?.length || 0), 0)
   const activeJobs = jobs.filter((job) => job.status === 'open').length
+  const statusOverview = APPLICATION_STATUS_OPTIONS.reduce<Record<string, number>>((accumulator, option) => {
+    accumulator[option.value] = recentApplicants.filter(
+      (application) => normalizeApplicationStatus(application.status) === option.value
+    ).length
+    return accumulator
+  }, {})
+  const recentMessages = messages
+    .slice(-4)
+    .reverse()
+    .map((message) => ({
+      id: message.id,
+      senderName: message.sender?.full_name || message.sender?.email || 'Unknown sender',
+      recipientName: message.recipient?.full_name || message.recipient?.email || 'Unknown recipient',
+      subject: message.subject,
+      body: message.body,
+      createdAt: message.created_at,
+      read: message.read,
+    }))
   const hasActiveFilters =
     searchQuery.trim().length > 0 || statusFilter !== 'all' || sortBy !== 'newest'
-  const recentJobs = visibleJobs.slice(0, 3)
 
   if (loading) {
     return (
@@ -188,17 +299,18 @@ export default function CompanyDashboard() {
                 Recruiter workspace
               </div>
               <h1 className="mt-5 text-4xl font-semibold tracking-[-0.04em] text-foreground">
-                Run hiring from one structured dashboard.
+                Manage hiring from one structured workspace.
               </h1>
               <p className="mt-4 max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">
-                Post roles, monitor response, and route into candidate review without losing context.
+                Control role status, review the pipeline, and stay in touch with candidates without losing context.
               </p>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-4">
               <DashboardStatCard icon={BriefcaseBusiness} value={jobs.length} label="Jobs posted" helper="All role states" />
-              <DashboardStatCard icon={Users} value={totalApplications} label="Applicants" helper="Across every posting" />
+              <DashboardStatCard icon={Users} value={totalApplications} label="Applicants" helper="Across your openings" />
               <DashboardStatCard icon={FileClock} value={activeJobs} label="Open roles" helper="Currently hiring" />
+              <DashboardStatCard icon={SearchCheck} value={recentApplicants.length} label="Recent applicants" helper="Latest candidate activity" />
             </div>
           </div>
         </div>
@@ -208,7 +320,7 @@ export default function CompanyDashboard() {
             <div className="mb-4">
               <h2 className="text-xl font-semibold text-foreground">Primary actions</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                The workflows recruiters typically need right after logging in.
+                The main workflows recruiters typically need after logging in.
               </p>
             </div>
             <div className="grid gap-4 md:grid-cols-3">
@@ -217,69 +329,45 @@ export default function CompanyDashboard() {
                 icon={BriefcaseBusiness}
                 eyebrow="Create"
                 title="Post a new role"
-                description="Publish a fresh opening with requirements, salary, and deadline."
+                description="Open a fresh position with requirements, salary, and deadline."
               />
               <ActionCard
-                href={recentJobs[0] ? `/dashboard/company/applications/${recentJobs[0].id}` : '/dashboard/company'}
+                href={jobs[0] ? `/dashboard/company/applications/${jobs[0].id}` : '/dashboard/company'}
                 icon={SearchCheck}
                 eyebrow="Review"
-                title="Review candidates"
-                description="Open the applicant pipeline and move promising candidates forward."
+                title="Review applicants"
+                description="Open candidate pipelines and move promising applicants forward."
               />
               <ActionCard
                 href="/profile"
-                icon={Building2}
-                eyebrow="Manage"
+                icon={Users}
+                eyebrow="Brand"
                 title="Update company profile"
-                description="Keep company details polished for candidates before they apply."
+                description="Improve candidate trust with a strong company profile."
               />
             </div>
           </section>
 
-          <Card className="rounded-[1.75rem] p-6">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h2 className="text-xl font-semibold text-foreground">Recent job activity</h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Your latest roles and their current demand.
-                </p>
-              </div>
-              <StatusBadge status={activeJobs > 0 ? 'open' : 'closed'} />
-            </div>
+          <InboxPreview
+            title="Messaging inbox"
+            description="Recent candidate conversations and follow-ups."
+            messages={recentMessages}
+            href="/messages"
+          />
+        </div>
 
-            <div className="mt-5 space-y-3">
-              {recentJobs.length > 0 ? (
-                recentJobs.map((job) => (
-                  <div
-                    key={job.id}
-                    className="rounded-[1.25rem] border border-border/70 bg-background/80 p-4"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="font-medium text-foreground">{job.title}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {job.applications?.length || 0} applicants
-                        </p>
-                      </div>
-                      <StatusBadge status={job.status} />
-                    </div>
-                    <p className="mt-3 text-xs text-muted-foreground">
-                      Posted {new Date(job.created_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                ))
-              ) : (
-                <div className="rounded-[1.25rem] border border-dashed border-border/80 bg-background/70 p-5 text-sm text-muted-foreground">
-                  No jobs posted yet. Start by creating your first role.
-                </div>
-              )}
-            </div>
-          </Card>
+        <div className="mb-8 grid gap-4 md:grid-cols-3 xl:grid-cols-6">
+          {APPLICATION_STATUS_OPTIONS.map((option) => (
+            <Card key={option.value} className="rounded-[1.5rem] p-4">
+              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{option.label}</p>
+              <p className="mt-3 text-2xl font-semibold text-foreground">{statusOverview[option.value] || 0}</p>
+            </Card>
+          ))}
         </div>
 
         <FilterPanel
-          title="Manage your hiring pipeline"
-          description="Search jobs, filter by status, and sort by recency or candidate volume."
+          title="Manage your role list"
+          description="Search roles, filter by status, and sort by activity to keep hiring organized."
           searchValue={searchQuery}
           searchPlaceholder="Search posted roles..."
           onSearchChange={setSearchQuery}
@@ -295,6 +383,7 @@ export default function CompanyDashboard() {
                 <SelectValue placeholder="All jobs" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="all">All jobs</SelectItem>
                 {JOB_STATUS_OPTIONS.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
@@ -323,23 +412,9 @@ export default function CompanyDashboard() {
           </div>
         </FilterPanel>
 
-        <div className="mt-5 flex flex-wrap gap-3">
-          {JOB_STATUS_OPTIONS.map((option) => (
-            <Button
-              key={option.value}
-              type="button"
-              variant={statusFilter === option.value ? 'default' : 'outline'}
-              className="rounded-full"
-              onClick={() => setStatusFilter(option.value)}
-            >
-              {option.label}
-            </Button>
-          ))}
-        </div>
-
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-muted-foreground">
-            {visibleJobs.length === 1 ? '1 job visible' : `${visibleJobs.length} jobs visible`}
+            {visibleJobs.length === 1 ? '1 role visible' : `${visibleJobs.length} roles visible`}
           </p>
           <p className="text-sm text-muted-foreground">
             {totalApplications} applicants across {activeJobs} active roles
@@ -351,16 +426,8 @@ export default function CompanyDashboard() {
             <Card className="col-span-full rounded-[1.75rem] p-8 text-center">
               <p className="text-lg font-semibold text-foreground">No jobs match the current filters</p>
               <p className="mt-2 text-sm text-muted-foreground">
-                Reset filters or create a new role to keep your pipeline moving.
+                Reset filters or create a new role to keep the pipeline moving.
               </p>
-              <div className="mt-5 flex justify-center gap-3">
-                <Button asChild>
-                  <Link href="/dashboard/company/post-job">Post a role</Link>
-                </Button>
-                <Button variant="outline" className="rounded-full" onClick={handleResetFilters}>
-                  Reset filters
-                </Button>
-              </div>
             </Card>
           ) : (
             visibleJobs.map((job) => (
@@ -377,12 +444,20 @@ export default function CompanyDashboard() {
 
                 <div className="mt-5 rounded-[1.25rem] border border-border/70 bg-background/75 p-4">
                   <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                    Posting activity
+                    Role status
                   </p>
-                  <p className="mt-2 text-sm text-foreground">
-                    Posted on {new Date(job.created_at).toLocaleDateString()} with{' '}
-                    {job.applications?.length || 0} submitted applications.
-                  </p>
+                  <Select value={job.status} onValueChange={(value) => void handleJobStatusChange(job.id, value)}>
+                    <SelectTrigger className="mt-3 h-11 rounded-full border-border/70 bg-background/80">
+                      <SelectValue placeholder="Choose status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {JOB_STATUS_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="mt-5 flex flex-wrap gap-3">
@@ -390,13 +465,74 @@ export default function CompanyDashboard() {
                     <Link href={`/dashboard/company/applications/${job.id}`}>Review candidates</Link>
                   </Button>
                   <Button variant="outline" asChild className="rounded-full">
-                    <Link href="/dashboard/company/post-job">Create another role</Link>
+                    <Link href={`/dashboard/company/post-job?jobId=${job.id}`}>Edit role</Link>
                   </Button>
                 </div>
               </Card>
             ))
           )}
         </div>
+
+        <section className="mt-10">
+          <div className="mb-6 flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-semibold text-foreground">Recent candidates</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                The latest applicants across your most recent roles.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-4 xl:grid-cols-2">
+            {recentApplicants.length > 0 ? (
+              recentApplicants.map((application) => (
+                <Card key={application.id} className="rounded-[1.75rem] p-6">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-lg font-semibold text-foreground">
+                        {application.student_profiles?.profiles?.full_name || 'Unnamed candidate'}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {application.jobs.title}
+                      </p>
+                    </div>
+                    <StatusBadge status={application.status} />
+                  </div>
+                  {application.student_profiles?.headline ? (
+                    <p className="mt-3 text-sm text-foreground">{application.student_profiles.headline}</p>
+                  ) : null}
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {(application.student_profiles?.skills || []).slice(0, 5).map((skill) => (
+                      <span key={skill} className="rounded-full border border-border/80 bg-background/80 px-3 py-1.5 text-xs text-muted-foreground">
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="mt-5 flex flex-wrap gap-3">
+                    <Button asChild className="rounded-full">
+                      <Link href={`/dashboard/company/applications/${application.job_id}`}>Open candidate</Link>
+                    </Button>
+                    {application.student_profiles?.profiles ? (
+                      <MessageComposer
+                        applicationId={application.id}
+                        recipientId={application.student_profiles.profiles.email ? application.student_profiles.profiles.email : ''}
+                        recipientLabel={application.student_profiles.profiles.full_name}
+                        buttonLabel="Message"
+                      />
+                    ) : null}
+                  </div>
+                </Card>
+              ))
+            ) : (
+              <Card className="rounded-[1.75rem] p-8 text-center xl:col-span-2">
+                <p className="text-lg font-semibold text-foreground">No recent applicants yet</p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  New candidates will appear here as soon as they apply to one of your roles.
+                </p>
+              </Card>
+            )}
+          </div>
+        </section>
       </main>
     </div>
   )

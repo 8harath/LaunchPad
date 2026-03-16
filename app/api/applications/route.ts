@@ -189,6 +189,7 @@ export async function GET(request: NextRequest) {
               devfolio_url: studentProfile.devfolio_url,
               profiles: profile
                 ? {
+                    id: profile.id,
                     full_name: profile.full_name,
                     email: profile.email,
                     bio: profile.bio,
