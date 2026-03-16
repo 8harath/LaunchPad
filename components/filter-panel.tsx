@@ -45,7 +45,7 @@ export function FilterPanel({
         </Button>
       </div>
 
-      <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+      <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,1.2fr)]">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -56,7 +56,7 @@ export function FilterPanel({
             className="h-11 rounded-full border-border/70 bg-background/80 pl-10"
           />
         </div>
-        {children ? <div className="grid gap-3 sm:grid-cols-2">{children}</div> : null}
+        {children ? <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-4">{children}</div> : null}
       </div>
     </div>
   )
