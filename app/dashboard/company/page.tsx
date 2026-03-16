@@ -134,7 +134,7 @@ export default function CompanyDashboard() {
         }
 
         const applicantResponses = await Promise.all(
-          loadedJobs.slice(0, 6).map((job) =>
+          loadedJobs.map((job) =>
             fetch(`/api/applications?jobId=${job.id}`, {
               headers: { Authorization: `Bearer ${session?.access_token || ''}` },
             })

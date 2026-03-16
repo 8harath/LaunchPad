@@ -30,15 +30,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (studentId && user.id !== studentId) {
-      const { data: ownedCompany } = await serverSupabase
-        .from('companies')
-        .select('id')
-        .eq('admin_id', user.id)
-        .maybeSingle()
-
-      if (!ownedCompany) {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-      }
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     if (jobId) {

@@ -95,7 +95,6 @@ export default function StudentDashboard() {
   const [community, setCommunity] = useState<CommunityPayload>({ reviews: [], stories: [], insights: [] })
   const [loading, setLoading] = useState(true)
   const [userName, setUserName] = useState<string | undefined>()
-  const [userId, setUserId] = useState<string>()
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [sortBy, setSortBy] = useState('newest')
@@ -111,9 +110,6 @@ export default function StudentDashboard() {
           router.push('/auth/login')
           return
         }
-
-        setUserId(authUser.id)
-
         const {
           data: { session },
         } = await supabase.auth.getSession()
