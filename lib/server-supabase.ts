@@ -2,7 +2,6 @@ import 'server-only'
 
 import { createClient } from '@supabase/supabase-js'
 import type { NextRequest } from 'next/server'
-import type { Database } from '@/types/database'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -11,7 +10,7 @@ if (!supabaseUrl || !supabaseServiceKey) {
   throw new Error('Missing Supabase credentials')
 }
 
-export const serverSupabase = createClient<Database>(supabaseUrl, supabaseServiceKey)
+export const serverSupabase = createClient(supabaseUrl, supabaseServiceKey)
 
 export async function getAuthorizedUser(request: NextRequest) {
   const authHeader = request.headers.get('authorization')

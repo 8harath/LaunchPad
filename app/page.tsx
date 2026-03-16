@@ -33,6 +33,7 @@ type HomeJob = {
   description: string
   location: string | null
   job_type: string | null
+  status: string
   created_at: string
   requirements: string[] | null
   applications?: { id: string; status: string }[]

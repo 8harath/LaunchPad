@@ -36,13 +36,19 @@ export async function GET(request: NextRequest) {
     if (jobId) {
       const { data: job, error: jobError } = await serverSupabase
         .from('jobs')
-        .select('id, company_id, companies:company_id(admin_id)')
+        .select('id, company_id')
         .eq('id', jobId)
         .single()
 
-      const ownerId = Array.isArray(job?.companies) ? job?.companies[0]?.admin_id : job?.companies?.admin_id
+      const { data: company } = job?.company_id
+        ? await serverSupabase
+            .from('companies')
+            .select('admin_id')
+            .eq('id', job.company_id)
+            .single()
+        : { data: null }
 
-      if (jobError || !job || ownerId !== user.id) {
+      if (jobError || !job || company?.admin_id !== user.id) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
       }
     }

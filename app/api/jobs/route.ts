@@ -15,7 +15,7 @@ type CreateJobRequest = {
   status?: string
 }
 
-const validJobStatuses = new Set(JOB_STATUS_OPTIONS.map((option) => option.value))
+const validJobStatuses = new Set<string>(JOB_STATUS_OPTIONS.map((option) => option.value))
 
 export async function GET(request: NextRequest) {
   try {
