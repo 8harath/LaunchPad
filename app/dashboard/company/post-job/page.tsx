@@ -1,24 +1,28 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { BackButton } from '@/components/back-button'
 import { Navbar } from '@/components/navbar'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { Card } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Spinner } from '@/components/ui/spinner'
+import { Textarea } from '@/components/ui/textarea'
+import { JOB_STATUS_OPTIONS, JOB_TYPE_OPTIONS, splitLineSeparated } from '@/lib/recruitment'
 import { BriefcaseBusiness, Sparkles } from 'lucide-react'
 
-export default function PostJobPage() {
+function PostJobPageContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const editingJobId = searchParams.get('jobId')
   const [company, setCompany] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
-  const [user, setUser] = useState<any>(null)
   const [userName, setUserName] = useState<string | undefined>()
+  const [error, setError] = useState('')
 
   const [formData, setFormData] = useState({
     title: '',
@@ -29,17 +33,20 @@ export default function PostJobPage() {
     salaryMax: '',
     requirements: '',
     deadline: '',
+    status: 'open',
   })
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const { data: { user: authUser } } = await supabase.auth.getUser()
+        const {
+          data: { user: authUser },
+        } = await supabase.auth.getUser()
+
         if (!authUser) {
           router.push('/auth/login')
           return
         }
-        setUser(authUser)
 
         const { data: profile } = await supabase
           .from('profiles')
@@ -49,7 +56,7 @@ export default function PostJobPage() {
 
         setUserName(profile?.full_name || authUser.email || undefined)
 
-        if (profile?.role !== 'company') {
+        if (profile?.role !== 'company' && profile?.role !== 'admin') {
           router.push('/dashboard/student')
           return
         }
@@ -61,62 +68,85 @@ export default function PostJobPage() {
           .single()
 
         setCompany(companyData)
-      } catch (error) {
-        console.error('Error checking auth:', error)
+
+        if (editingJobId) {
+          const response = await fetch(`/api/jobs?jobId=${editingJobId}`)
+          if (response.ok) {
+            const payload = await response.json()
+            const job = payload.jobs?.[0]
+
+            if (job) {
+              setFormData({
+                title: job.title || '',
+                description: job.description || '',
+                location: job.location || '',
+                jobType: job.job_type || 'Full-time',
+                salaryMin: job.salary_min ? String(job.salary_min) : '',
+                salaryMax: job.salary_max ? String(job.salary_max) : '',
+                requirements: (job.requirements || []).join('\n'),
+                deadline: job.deadline ? new Date(job.deadline).toISOString().split('T')[0] : '',
+                status: job.status || 'open',
+              })
+            }
+          }
+        }
+      } catch (loadError) {
+        console.error('Error loading recruiter form:', loadError)
+        setError('Unable to load the job form right now.')
       } finally {
         setLoading(false)
       }
     }
 
     checkAuth()
-  }, [router])
+  }, [editingJobId, router])
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut()
-    router.push('/')
-  }
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: value,
-    }))
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!company) return
+    if (!company) {
+      return
+    }
 
     setSubmitting(true)
+    setError('')
+
     try {
-      const { data: { session } } = await supabase.auth.getSession()
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      const payload = {
+        jobId: editingJobId || undefined,
+        companyId: company.id,
+        title: formData.title,
+        description: formData.description,
+        location: formData.location,
+        jobType: formData.jobType,
+        salaryMin: formData.salaryMin ? Number(formData.salaryMin) : null,
+        salaryMax: formData.salaryMax ? Number(formData.salaryMax) : null,
+        requirements: splitLineSeparated(formData.requirements),
+        deadline: formData.deadline || null,
+        status: formData.status,
+      }
+
       const response = await fetch('/api/jobs', {
-        method: 'POST',
+        method: editingJobId ? 'PATCH' : 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token || ''}`,
+          Authorization: `Bearer ${session?.access_token || ''}`,
         },
-        body: JSON.stringify({
-          companyId: company.id,
-          title: formData.title,
-          description: formData.description,
-          location: formData.location,
-          jobType: formData.jobType,
-          salaryMin: formData.salaryMin ? parseInt(formData.salaryMin) : null,
-          salaryMax: formData.salaryMax ? parseInt(formData.salaryMax) : null,
-          requirements: formData.requirements.split('\n').filter(r => r.trim()),
-          deadline: formData.deadline || null,
-        }),
+        body: JSON.stringify(payload),
       })
 
-      if (response.ok) {
-        router.push('/dashboard/company')
-      } else {
-        console.error('Error creating job')
+      if (!response.ok) {
+        const data = await response.json().catch(() => null)
+        throw new Error(data?.error || 'Unable to save this job.')
       }
-    } catch (error) {
-      console.error('Error:', error)
+
+      router.push('/dashboard/company')
+    } catch (submitError: any) {
+      setError(submitError?.message || 'Unable to save this job.')
     } finally {
       setSubmitting(false)
     }
@@ -125,7 +155,7 @@ export default function PostJobPage() {
   if (loading) {
     return (
       <div className="ambient-page min-h-screen bg-background">
-        <Navbar userRole="company" userName={userName} onLogout={handleLogout} />
+        <Navbar userRole="company" userName={userName} />
         <div className="flex items-center justify-center py-12">
           <Spinner />
         </div>
@@ -135,162 +165,168 @@ export default function PostJobPage() {
 
   return (
     <div className="ambient-page min-h-screen bg-background">
-      <Navbar userRole="company" userName={userName} onLogout={handleLogout} />
-      <main className="container mx-auto px-4 py-12">
+      <Navbar userRole="company" userName={userName} />
+      <main className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="page-hero mb-8 rounded-[2rem] border border-border/80 px-6 py-8 sm:px-8">
           <BackButton fallbackHref="/dashboard/company" className="mb-4 rounded-full" />
           <div className="section-kicker">
             <Sparkles className="h-3.5 w-3.5" />
             Recruiter action
           </div>
-          <h1 className="text-4xl font-bold text-foreground mb-2">Post a New Job</h1>
-          <p className="text-muted-foreground">
-            Fill out the form below to post a new job opportunity
+          <h1 className="mt-4 text-4xl font-semibold tracking-[-0.04em] text-foreground">
+            {editingJobId ? 'Edit this hiring role' : 'Post a new role'}
+          </h1>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Publish clear expectations, manage salary and deadline, and control whether the role is open, closed, or filled.
           </p>
         </div>
 
-        <Card className="max-w-2xl rounded-[2rem] p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Job Title
-              </label>
-              <Input
-                type="text"
-                name="title"
-                value={formData.title}
-                onChange={handleInputChange}
-                placeholder="e.g. Full-Stack Engineer"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Description
-              </label>
-              <Textarea
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                placeholder="Describe the job role, responsibilities, and what you're looking for..."
-                rows={6}
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Location
-                </label>
+        <Card className="rounded-[2rem] p-8">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="md:col-span-2">
+                <label className="mb-2 block text-sm font-medium text-foreground">Job title</label>
                 <Input
-                  type="text"
-                  name="location"
+                  value={formData.title}
+                  onChange={(event) => setFormData((current) => ({ ...current, title: event.target.value }))}
+                  placeholder="Full-Stack Engineer"
+                  required
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="mb-2 block text-sm font-medium text-foreground">Description</label>
+                <Textarea
+                  value={formData.description}
+                  onChange={(event) => setFormData((current) => ({ ...current, description: event.target.value }))}
+                  placeholder="Describe responsibilities, team context, and what success looks like."
+                  className="min-h-40"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-foreground">Location</label>
+                <Input
                   value={formData.location}
-                  onChange={handleInputChange}
-                  placeholder="e.g. Bengaluru, India"
+                  onChange={(event) => setFormData((current) => ({ ...current, location: event.target.value }))}
+                  placeholder="Bengaluru, India"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Job Type
-                </label>
-                <select
-                  name="jobType"
+                <label className="mb-2 block text-sm font-medium text-foreground">Job type</label>
+                <Select
                   value={formData.jobType}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
+                  onValueChange={(value) => setFormData((current) => ({ ...current, jobType: value }))}
                 >
-                  <option value="Full-time">Full-time</option>
-                  <option value="Part-time">Part-time</option>
-                  <option value="Contract">Contract</option>
-                  <option value="Internship">Internship</option>
-                </select>
+                  <SelectTrigger className="h-11 rounded-xl">
+                    <SelectValue placeholder="Select job type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {JOB_TYPE_OPTIONS.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Salary Min in INR (Optional)
-                </label>
+                <label className="mb-2 block text-sm font-medium text-foreground">Salary min</label>
                 <Input
                   type="number"
-                  name="salaryMin"
                   value={formData.salaryMin}
-                  onChange={handleInputChange}
-                  placeholder="e.g. 800000"
+                  onChange={(event) => setFormData((current) => ({ ...current, salaryMin: event.target.value }))}
+                  placeholder="800000"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Salary Max in INR (Optional)
-                </label>
+                <label className="mb-2 block text-sm font-medium text-foreground">Salary max</label>
                 <Input
                   type="number"
-                  name="salaryMax"
                   value={formData.salaryMax}
-                  onChange={handleInputChange}
-                  placeholder="e.g. 1400000"
+                  onChange={(event) => setFormData((current) => ({ ...current, salaryMax: event.target.value }))}
+                  placeholder="1400000"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-foreground">Application deadline</label>
+                <Input
+                  type="date"
+                  value={formData.deadline}
+                  onChange={(event) => setFormData((current) => ({ ...current, deadline: event.target.value }))}
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-foreground">Role status</label>
+                <Select
+                  value={formData.status}
+                  onValueChange={(value) => setFormData((current) => ({ ...current, status: value }))}
+                >
+                  <SelectTrigger className="h-11 rounded-xl">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {JOB_STATUS_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="mb-2 block text-sm font-medium text-foreground">Requirements</label>
+                <Textarea
+                  value={formData.requirements}
+                  onChange={(event) => setFormData((current) => ({ ...current, requirements: event.target.value }))}
+                  placeholder={'Type one requirement per line\nReact\nTypeScript\nAPI design'}
+                  className="min-h-36"
                 />
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Requirements (One per line)
-              </label>
-              <Textarea
-                name="requirements"
-                value={formData.requirements}
-                onChange={handleInputChange}
-                placeholder="e.g. 3+ years of experience&#10;React/TypeScript&#10;PostgreSQL"
-                rows={4}
-              />
-            </div>
+            {error ? (
+              <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                {error}
+              </div>
+            ) : null}
 
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Application Deadline (Optional)
-              </label>
-              <Input
-                type="date"
-                name="deadline"
-                value={formData.deadline}
-                onChange={handleInputChange}
-              />
-            </div>
-
-            <div className="flex gap-4">
-              <Button
-                type="submit"
-                disabled={submitting}
-                className="flex-1"
-              >
-                {submitting ? (
-                  <>
-                    <Spinner className="mr-2" />
-                    Posting...
-                  </>
-                ) : (
-                  'Post Job'
-                )}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1"
-                onClick={() => router.back()}
-              >
+            <div className="flex flex-wrap justify-end gap-3">
+              <Button type="button" variant="outline" className="rounded-full" onClick={() => router.push('/dashboard/company')}>
                 Cancel
+              </Button>
+              <Button type="submit" className="rounded-full" disabled={submitting}>
+                <BriefcaseBusiness className="h-4 w-4" />
+                {submitting ? 'Saving...' : editingJobId ? 'Save changes' : 'Publish role'}
               </Button>
             </div>
           </form>
         </Card>
       </main>
     </div>
+  )
+}
+
+export default function PostJobPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="ambient-page min-h-screen bg-background">
+          <Navbar userRole="company" />
+          <div className="flex items-center justify-center py-12">
+            <Spinner />
+          </div>
+        </div>
+      }
+    >
+      <PostJobPageContent />
+    </Suspense>
   )
 }

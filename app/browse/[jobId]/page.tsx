@@ -2,14 +2,20 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { BriefcaseBusiness, Check, IndianRupee, MapPin, Sparkles } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { BackButton } from '@/components/back-button'
+import { ApplicationProgress } from '@/components/application-progress'
 import { Navbar } from '@/components/navbar'
+import { MessageComposer } from '@/components/message-composer'
 import { StatusBadge } from '@/components/status-badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
+import { Textarea } from '@/components/ui/textarea'
+import { formatSalaryRange } from '@/lib/recruitment'
 
 type Job = {
   id: string
@@ -28,6 +34,10 @@ type Job = {
     logo_url: string | null
     description: string | null
     website: string | null
+    industry?: string | null
+    size?: string | null
+    location?: string | null
+    admin_id?: string | null
   }
 }
 
@@ -38,7 +48,12 @@ export default function JobDetailPage() {
   const [loading, setLoading] = useState(true)
   const [applying, setApplying] = useState(false)
   const [user, setUser] = useState<any>(null)
-  const [hasApplied, setHasApplied] = useState(false)
+  const [userRole, setUserRole] = useState<string>()
+  const [applicationId, setApplicationId] = useState<string>()
+  const [applicationStatus, setApplicationStatus] = useState<string>('applied')
+  const [coverLetter, setCoverLetter] = useState('')
+  const [resumeUrl, setResumeUrl] = useState('')
+  const [submissionError, setSubmissionError] = useState('')
 
   const jobId = params.jobId as string
 
@@ -50,6 +65,16 @@ export default function JobDetailPage() {
         } = await supabase.auth.getUser()
         setUser(authUser)
 
+        if (authUser) {
+          const [{ data: profile }, { data: studentProfile }] = await Promise.all([
+            supabase.from('profiles').select('role').eq('id', authUser.id).maybeSingle(),
+            supabase.from('student_profiles').select('resume_url').eq('id', authUser.id).maybeSingle(),
+          ])
+
+          setUserRole(profile?.role || undefined)
+          setResumeUrl(studentProfile?.resume_url || '')
+        }
+
         const response = await fetch(`/api/jobs?jobId=${jobId}`)
         if (response.ok) {
           const data = await response.json()
@@ -59,13 +84,14 @@ export default function JobDetailPage() {
         if (authUser) {
           const { data: existingApp } = await supabase
             .from('applications')
-            .select('id')
+            .select('id, status')
             .eq('job_id', jobId)
             .eq('student_id', authUser.id)
-            .single()
+            .maybeSingle()
 
           if (existingApp) {
-            setHasApplied(true)
+            setApplicationId(existingApp.id)
+            setApplicationStatus(existingApp.status)
           }
         }
       } catch (error) {
@@ -84,25 +110,45 @@ export default function JobDetailPage() {
       return
     }
 
+    if (userRole !== 'student') {
+      setSubmissionError('Only student accounts can apply for jobs.')
+      return
+    }
+
     setApplying(true)
+    setSubmissionError('')
     try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
       const response = await fetch('/api/applications', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session?.access_token || ''}`,
+        },
         body: JSON.stringify({
           jobId,
-          studentId: user.id,
+          resumeUrl: resumeUrl || undefined,
+          coverLetter: coverLetter || undefined,
         }),
       })
 
       if (response.ok) {
-        setHasApplied(true)
+        const createdApplication = await response.json()
+        setApplicationId(createdApplication.id)
+        setApplicationStatus(createdApplication.status)
         setTimeout(() => {
           router.push('/dashboard/student')
         }, 1000)
+      } else {
+        const payload = await response.json().catch(() => null)
+        setSubmissionError(payload?.error || 'Unable to submit your application.')
       }
     } catch (error) {
       console.error('Error applying:', error)
+      setSubmissionError('Unable to submit your application.')
     } finally {
       setApplying(false)
     }
@@ -168,7 +214,7 @@ export default function JobDetailPage() {
                 {job.salary_min && job.salary_max ? (
                   <span className="inline-flex items-center gap-2 text-sm font-medium text-foreground">
                     <IndianRupee className="h-4 w-4" />
-                    {job.salary_min.toLocaleString()} - {job.salary_max.toLocaleString()}
+                    {formatSalaryRange(job.salary_min, job.salary_max)}
                   </span>
                 ) : null}
               </div>
@@ -186,7 +232,7 @@ export default function JobDetailPage() {
                 <p className="text-sm text-muted-foreground">Compensation</p>
                 <p className="mt-3 text-lg font-semibold text-foreground">
                   {job.salary_min && job.salary_max
-                    ? `${job.salary_min.toLocaleString()} - ${job.salary_max.toLocaleString()}`
+                    ? formatSalaryRange(job.salary_min, job.salary_max)
                     : 'Discussed later'}
                 </p>
               </div>
@@ -221,6 +267,12 @@ export default function JobDetailPage() {
                 <p className="text-foreground">{job.companies.description}</p>
               </Card>
             ) : null}
+
+            {applicationId ? (
+              <div className="mt-8">
+                <ApplicationProgress status={applicationStatus} />
+              </div>
+            ) : null}
           </div>
 
           <div>
@@ -234,6 +286,11 @@ export default function JobDetailPage() {
                   />
                 ) : null}
                 <h3 className="mb-2 text-lg font-bold text-foreground">{job.companies.name}</h3>
+                <div className="space-y-1 text-sm text-muted-foreground">
+                  {job.companies.industry ? <p>{job.companies.industry}</p> : null}
+                  {job.companies.size ? <p>{job.companies.size} team</p> : null}
+                  {job.companies.location ? <p>{job.companies.location}</p> : null}
+                </div>
                 {job.companies.website ? (
                   <a
                     href={job.companies.website}
@@ -255,9 +312,60 @@ export default function JobDetailPage() {
                 </div>
               ) : null}
 
-              <Button onClick={handleApply} disabled={applying || hasApplied} className="w-full" size="lg">
-                {hasApplied ? 'Already Applied' : applying ? 'Applying...' : 'Apply Now'}
-              </Button>
+              {!applicationId && userRole === 'student' ? (
+                <div className="space-y-4">
+                  <div>
+                    <p className="mb-2 text-sm font-medium text-foreground">Resume link</p>
+                    <Input
+                      value={resumeUrl}
+                      onChange={(event) => setResumeUrl(event.target.value)}
+                      placeholder="Paste your resume URL"
+                    />
+                  </div>
+                  <div>
+                    <p className="mb-2 text-sm font-medium text-foreground">Cover letter</p>
+                    <Textarea
+                      value={coverLetter}
+                      onChange={(event) => setCoverLetter(event.target.value)}
+                      placeholder="Briefly explain why you are a fit for this role."
+                      className="min-h-32"
+                    />
+                  </div>
+                </div>
+              ) : null}
+
+              {submissionError ? (
+                <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                  {submissionError}
+                </div>
+              ) : null}
+
+              <div className="mt-4 space-y-3">
+                <Button
+                  onClick={handleApply}
+                  disabled={applying || !!applicationId || userRole === 'company'}
+                  className="w-full"
+                  size="lg"
+                >
+                  {applicationId ? 'Application submitted' : applying ? 'Applying...' : 'Apply now'}
+                </Button>
+
+                {applicationId && job.companies.admin_id ? (
+                  <MessageComposer
+                    applicationId={applicationId}
+                    recipientId={job.companies.admin_id}
+                    recipientLabel={job.companies.name}
+                    defaultSubject={`Regarding ${job.title}`}
+                    buttonLabel="Message recruiter"
+                  />
+                ) : null}
+
+                {applicationId ? (
+                  <Button variant="outline" asChild className="w-full rounded-full">
+                    <Link href="/dashboard/student">View application status</Link>
+                  </Button>
+                ) : null}
+              </div>
 
               {!user ? (
                 <p className="mt-4 text-center text-xs text-muted-foreground">

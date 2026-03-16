@@ -113,7 +113,7 @@ export async function GET(request: NextRequest) {
     const companyIds = [...new Set((jobs || []).map((job) => job.company_id))]
     const { data: companies, error: companiesError } = await serverSupabase
       .from('companies')
-      .select('id, name, logo_url, location, industry, website, size')
+      .select('id, name, logo_url, location, industry, website, size, admin_id')
       .in('id', companyIds)
 
     if (companiesError) {
@@ -154,6 +154,7 @@ export async function GET(request: NextRequest) {
                     industry: company.industry,
                     website: company.website,
                     size: company.size,
+                    admin_id: company.admin_id,
                   }
                 : null,
             }
