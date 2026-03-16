@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { AppLogo } from '@/components/app-logo'
 import { NotificationCenter } from '@/components/notification-center'
+import { ThemeToggle } from '@/components/theme-toggle'
 import { BriefcaseBusiness, Compass, LayoutDashboard, MessageSquareMore, UserCircle2, Users } from 'lucide-react'
 
 interface NavbarProps {
@@ -126,6 +127,7 @@ export function Navbar({ userRole, userName, avatarUrl, onLogout }: NavbarProps)
           <div className="flex items-center gap-3">
             {displayName ? (
               <>
+                <ThemeToggle />
                 <NotificationCenter
                   notifications={notifications}
                   unreadCount={unreadCount}
@@ -155,6 +157,7 @@ export function Navbar({ userRole, userName, avatarUrl, onLogout }: NavbarProps)
               </>
             ) : (
               <>
+                <ThemeToggle />
                 <Link href="/auth/login">
                   <Button variant="ghost" size="sm" className="h-9 rounded-full">
                     Sign in
