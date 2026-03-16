@@ -163,17 +163,20 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const payload = {
-      title: title?.trim(),
-      description: description?.trim(),
-      requirements: requirements || [],
-      salary_min: salaryMin || null,
-      salary_max: salaryMax || null,
-      job_type: jobType?.trim() || null,
-      location: location?.trim() || null,
-      deadline: deadline || null,
-      status: validJobStatuses.has(status || '') ? (status as 'open' | 'closed' | 'filled') : 'open',
+    const payload: Record<string, unknown> = {
       updated_at: new Date().toISOString(),
+    }
+
+    if (typeof title === 'string') payload.title = title.trim()
+    if (typeof description === 'string' && description.trim()) payload.description = description.trim()
+    if (requirements) payload.requirements = requirements
+    if (salaryMin !== undefined) payload.salary_min = salaryMin || null
+    if (salaryMax !== undefined) payload.salary_max = salaryMax || null
+    if (typeof jobType === 'string') payload.job_type = jobType.trim() || null
+    if (typeof location === 'string') payload.location = location.trim() || null
+    if (deadline !== undefined) payload.deadline = deadline || null
+    if (status && validJobStatuses.has(status)) {
+      payload.status = status as 'open' | 'closed' | 'filled'
     }
 
     const { data, error } = await serverSupabase

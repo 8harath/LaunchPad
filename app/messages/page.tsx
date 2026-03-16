@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 import { MessageSquareMore, Send, Sparkles } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Navbar } from '@/components/navbar'
@@ -46,7 +47,7 @@ function MessagesPageContent() {
 
   const selectedApplicationIdFromQuery = searchParams.get('applicationId')
 
-  const loadMessages = async (preferredApplicationId?: string | null) => {
+  const loadMessages = async (currentUserId: string, preferredApplicationId?: string | null) => {
     const {
       data: { session },
     } = await supabase.auth.getSession()
@@ -68,7 +69,7 @@ function MessagesPageContent() {
     const threadId = preferredApplicationId || loadedMessages[0]?.application_id
     if (threadId) {
       const unreadIds = loadedMessages
-        .filter((message: InboxMessage) => message.application_id === threadId && message.recipient_id === userId && !message.read)
+        .filter((message: InboxMessage) => message.application_id === threadId && message.recipient_id === currentUserId && !message.read)
         .map((message: InboxMessage) => message.id)
 
       if (unreadIds.length > 0) {
@@ -107,7 +108,7 @@ function MessagesPageContent() {
         setUserName(profile?.full_name || user.email || undefined)
         setUserRole(profile?.role || undefined)
 
-        await loadMessages(selectedApplicationIdFromQuery)
+        await loadMessages(user.id, selectedApplicationIdFromQuery)
       } catch (loadError: any) {
         setError(loadError?.message || 'Unable to load messages.')
       } finally {
@@ -187,7 +188,7 @@ function MessagesPageContent() {
       }
 
       setBody('')
-      await loadMessages(selectedThread.applicationId)
+      await loadMessages(userId || '', selectedThread.applicationId)
     } catch (sendError: any) {
       setError(sendError?.message || 'Unable to send message.')
     } finally {
@@ -225,7 +226,7 @@ function MessagesPageContent() {
               <div className="mt-3 space-y-2">
                 {threads.length > 0 ? (
                   threads.map((thread) => (
-                    <a
+                    <Link
                       key={thread.applicationId}
                       href={`/messages?applicationId=${thread.applicationId}`}
                       className={`block rounded-[1.25rem] border p-4 ${
@@ -252,7 +253,7 @@ function MessagesPageContent() {
                       <p className="mt-3 line-clamp-2 text-sm leading-6 text-muted-foreground">
                         {thread.latest.body}
                       </p>
-                    </a>
+                    </Link>
                   ))
                 ) : (
                   <div className="rounded-[1.25rem] border border-dashed border-border/80 bg-background/70 p-5 text-sm text-muted-foreground">

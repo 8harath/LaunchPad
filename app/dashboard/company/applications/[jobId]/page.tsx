@@ -19,6 +19,8 @@ import {
 import { DashboardStatCard } from '@/components/dashboard-stat-card'
 import { FilterPanel } from '@/components/filter-panel'
 import { Button } from '@/components/ui/button'
+import { MessageComposer } from '@/components/message-composer'
+import { APPLICATION_STATUS_OPTIONS, normalizeApplicationStatus } from '@/lib/recruitment'
 
 type Application = {
   id: string
@@ -54,6 +56,7 @@ type Application = {
     leetcode_url: string | null
     devfolio_url: string | null
     profiles: {
+      id: string
       full_name: string
       email: string
       bio: string | null
@@ -64,11 +67,7 @@ type Application = {
 
 const REVIEW_STATUS_OPTIONS = [
   { value: 'all', label: 'All candidates' },
-  { value: 'pending', label: 'Pending' },
-  { value: 'reviewing', label: 'Reviewing' },
-  { value: 'accepted', label: 'Accepted' },
-  { value: 'rejected', label: 'Rejected' },
-  { value: 'offer_extended', label: 'Offer extended' },
+  ...APPLICATION_STATUS_OPTIONS.map((option) => ({ value: option.value, label: option.label })),
 ]
 
 const SORT_OPTIONS = [
@@ -124,7 +123,14 @@ export default function ApplicationsPage() {
           }
         }
 
-        const response = await fetch(`/api/applications?jobId=${jobId}`)
+        const {
+          data: { session },
+        } = await supabase.auth.getSession()
+        const response = await fetch(`/api/applications?jobId=${jobId}`, {
+          headers: {
+            Authorization: `Bearer ${session?.access_token || ''}`,
+          },
+        })
         if (response.ok) {
           const { applications: applicationData } = await response.json()
           setApplications(applicationData || [])
@@ -191,7 +197,7 @@ export default function ApplicationsPage() {
         headline.includes(normalizedQuery) ||
         normalizedSkills.includes(normalizedQuery)
 
-      const matchesStatus = statusFilter === 'all' || application.status === statusFilter
+      const matchesStatus = statusFilter === 'all' || normalizeApplicationStatus(application.status) === statusFilter
 
       return matchesSearch && matchesStatus
     })
@@ -207,9 +213,9 @@ export default function ApplicationsPage() {
       return new Date(right.created_at).getTime() - new Date(left.created_at).getTime()
     })
 
-  const inReview = applications.filter((application) => application.status === 'reviewing').length
+  const inReview = applications.filter((application) => normalizeApplicationStatus(application.status) === 'under_review').length
   const advanced = applications.filter((application) =>
-    ['accepted', 'offer_extended'].includes(application.status)
+    ['shortlisted', 'interview_scheduled', 'accepted'].includes(normalizeApplicationStatus(application.status))
   ).length
   const hasActiveFilters =
     searchQuery.trim().length > 0 || statusFilter !== 'all' || sortBy !== 'newest'
@@ -397,11 +403,12 @@ export default function ApplicationsPage() {
                           <SelectValue placeholder="Choose status" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="reviewing">Reviewing</SelectItem>
+                          <SelectItem value="applied">Applied</SelectItem>
+                          <SelectItem value="under_review">Under review</SelectItem>
+                          <SelectItem value="shortlisted">Shortlisted</SelectItem>
+                          <SelectItem value="interview_scheduled">Interview scheduled</SelectItem>
                           <SelectItem value="accepted">Accepted</SelectItem>
                           <SelectItem value="rejected">Rejected</SelectItem>
-                          <SelectItem value="offer_extended">Offer extended</SelectItem>
                         </SelectContent>
                       </Select>
                       <p className="mt-3 text-xs text-muted-foreground">
@@ -441,6 +448,14 @@ export default function ApplicationsPage() {
                   </div>
 
                   <div className="mt-5 flex flex-wrap gap-2">
+                    {candidate?.id ? (
+                      <MessageComposer
+                        applicationId={application.id}
+                        recipientId={candidate.id}
+                        recipientLabel={candidate.full_name || 'candidate'}
+                        defaultSubject={`Regarding ${job?.title || 'your application'}`}
+                      />
+                    ) : null}
                     {(application.resume_url || profile?.resume_url) ? (
                       <a
                         href={application.resume_url || profile?.resume_url || '#'}

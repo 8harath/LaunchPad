@@ -611,8 +611,16 @@ export default function Home() {
         setUserRole(resolvedRole)
         setUserName(profile?.full_name || user.email || undefined)
 
+        const {
+          data: { session },
+        } = await supabase.auth.getSession()
+
         if (resolvedRole === 'student') {
-          const response = await fetch(`/api/applications?studentId=${user.id}`)
+          const response = await fetch(`/api/applications?studentId=${user.id}`, {
+            headers: {
+              Authorization: `Bearer ${session?.access_token || ''}`,
+            },
+          })
           if (response.ok) {
             const { applications } = await response.json()
             setStudentApplications(applications || [])

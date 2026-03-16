@@ -51,6 +51,7 @@ type ApplicantPreview = {
     headline: string | null
     skills: string[]
     profiles: {
+      id: string
       full_name: string
       email: string
     } | null
@@ -197,8 +198,6 @@ export default function CompanyDashboard() {
         jobId,
         companyId: company.id,
         title: targetJob.title,
-        description: '',
-        requirements: [],
         status: newStatus,
       }),
     })
@@ -515,7 +514,7 @@ export default function CompanyDashboard() {
                     {application.student_profiles?.profiles ? (
                       <MessageComposer
                         applicationId={application.id}
-                        recipientId={application.student_profiles.profiles.email ? application.student_profiles.profiles.email : ''}
+                        recipientId={application.student_profiles.profiles.id}
                         recipientLabel={application.student_profiles.profiles.full_name}
                         buttonLabel="Message"
                       />
