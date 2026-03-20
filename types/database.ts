@@ -350,6 +350,53 @@ export type Database = {
           updated_at?: string
         }
       }
+      message_conversations: {
+        Row: {
+          id: string
+          application_id: string
+          student_id: string
+          company_id: string
+          company_admin_id: string
+          last_message_at: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          application_id: string
+          student_id: string
+          company_id: string
+          company_admin_id: string
+          last_message_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          last_message_at?: string
+          updated_at?: string
+        }
+      }
+      message_entries: {
+        Row: {
+          id: string
+          conversation_id: string
+          sender_id: string
+          body: string
+          read_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          conversation_id: string
+          sender_id: string
+          body: string
+          read_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          read_at?: string | null
+        }
+      }
       company_reviews: {
         Row: {
           id: string
