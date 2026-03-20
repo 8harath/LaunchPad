@@ -7,6 +7,7 @@ import { Navbar } from '@/components/navbar'
 import { StatusBadge } from '@/components/status-badge'
 import { BackButton } from '@/components/back-button'
 import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 
 type Application = {
@@ -87,9 +88,11 @@ export default function ApplicationsPage() {
           .eq('id', jobId)
           .single()
 
-        if (jobData) {
-          setJob(jobData)
-          if (jobData.companies.admin_id !== user.id) {
+        const jobRecord = jobData as any
+
+        if (jobRecord) {
+          setJob(jobRecord)
+          if (jobRecord.companies.admin_id !== user.id) {
             router.push('/dashboard/company')
             return
           }
@@ -137,6 +140,38 @@ export default function ApplicationsPage() {
       }
     } catch (error) {
       console.error('Error updating application:', error)
+    }
+  }
+
+  const handleOpenConversation = async (applicationId: string) => {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      const token = session?.access_token
+      if (!token) {
+        router.push('/auth/login')
+        return
+      }
+
+      const response = await fetch('/api/messages/conversations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ applicationId }),
+      })
+
+      if (!response.ok) {
+        return
+      }
+
+      const conversation = await response.json()
+      router.push(`/messages?conversationId=${conversation.id}`)
+    } catch (error) {
+      console.error('Error opening conversation:', error)
     }
   }
 
@@ -318,6 +353,16 @@ export default function ApplicationsPage() {
                   <option value="rejected">Rejected</option>
                   <option value="offer_extended">Offer Extended</option>
                 </select>
+                <div className="mt-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full"
+                    onClick={() => void handleOpenConversation(app.id)}
+                  >
+                    Open Messages
+                  </Button>
+                </div>
               </Card>
             ))
           )}
