@@ -12,9 +12,10 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { applicationId: string } }
+  { params }: { params: Promise<{ applicationId: string }> }
 ) {
   try {
+    const { applicationId } = await params
     const body = await request.json()
     const { status } = body
 
@@ -50,7 +51,7 @@ export async function PATCH(
     const { data: application, error: fetchError } = await supabase
       .from('applications')
       .select('*, jobs(company_id)')
-      .eq('id', params.applicationId)
+      .eq('id', applicationId)
       .single()
 
     if (fetchError || !application) {
@@ -83,7 +84,7 @@ export async function PATCH(
         status,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', params.applicationId)
+      .eq('id', applicationId)
       .select()
       .single()
 

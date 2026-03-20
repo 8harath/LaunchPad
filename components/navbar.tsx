@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { AppLogo } from '@/components/app-logo'
+import { NotificationMenu } from '@/components/notification-menu'
 
 interface NavbarProps {
   userRole?: string
@@ -20,6 +21,7 @@ export function Navbar({ userRole, userName, avatarUrl, onLogout }: NavbarProps)
   const [resolvedRole, setResolvedRole] = useState<string | undefined>(userRole)
   const [resolvedName, setResolvedName] = useState<string | undefined>(userName)
   const [resolvedAvatar, setResolvedAvatar] = useState<string | undefined>(avatarUrl || undefined)
+  const [resolvedUserId, setResolvedUserId] = useState<string | undefined>()
 
   useEffect(() => {
     const hydrateNavbar = async () => {
@@ -28,6 +30,7 @@ export function Navbar({ userRole, userName, avatarUrl, onLogout }: NavbarProps)
       } = await supabase.auth.getUser()
 
       if (!user) return
+      setResolvedUserId(user.id)
 
       const { data: profile } = await supabase
         .from('profiles')
@@ -97,6 +100,11 @@ export function Navbar({ userRole, userName, avatarUrl, onLogout }: NavbarProps)
               </Link>
             ) : null}
             {displayRole ? (
+              <Link href="/messages" className="text-muted-foreground transition-colors hover:text-foreground">
+                Messages
+              </Link>
+            ) : null}
+            {displayRole ? (
               <Link href="/profile" className="text-muted-foreground transition-colors hover:text-foreground">
                 Profile
               </Link>
@@ -106,6 +114,7 @@ export function Navbar({ userRole, userName, avatarUrl, onLogout }: NavbarProps)
           <div className="flex items-center gap-3">
             {displayName ? (
               <>
+                <NotificationMenu userId={resolvedUserId} userRole={displayRole} />
                 <Link href="/profile" className="hidden items-center gap-3 rounded-full border border-border bg-card px-2 py-1 pr-3 sm:flex">
                   <Avatar className="h-8 w-8 border border-border">
                     <AvatarImage src={displayAvatar} alt={displayName} />

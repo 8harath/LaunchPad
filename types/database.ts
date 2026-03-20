@@ -30,6 +30,7 @@ export type Database = {
           bio?: string | null
           updated_at?: string
         }
+        Relationships: []
       }
       companies: {
         Row: {
@@ -68,6 +69,7 @@ export type Database = {
           size?: string | null
           updated_at?: string
         }
+        Relationships: []
       }
       student_profiles: {
         Row: {
@@ -164,6 +166,7 @@ export type Database = {
           devfolio_url?: string | null
           updated_at?: string
         }
+        Relationships: []
       }
       jobs: {
         Row: {
@@ -208,6 +211,7 @@ export type Database = {
           updated_at?: string
           deadline?: string | null
         }
+        Relationships: []
       }
       job_details: {
         Row: {
@@ -224,6 +228,13 @@ export type Database = {
           value: string
           created_at?: string
         }
+        Update: {
+          job_id?: string
+          key?: string
+          value?: string
+          created_at?: string
+        }
+        Relationships: []
       }
       applications: {
         Row: {
@@ -255,6 +266,7 @@ export type Database = {
           custom_response?: string | null
           updated_at?: string
         }
+        Relationships: []
       }
       notifications: {
         Row: {
@@ -278,6 +290,56 @@ export type Database = {
         Update: {
           read?: boolean
         }
+        Relationships: []
+      }
+      message_conversations: {
+        Row: {
+          id: string
+          application_id: string
+          student_id: string
+          company_id: string
+          company_admin_id: string
+          last_message_at: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          application_id: string
+          student_id: string
+          company_id: string
+          company_admin_id: string
+          last_message_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          last_message_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      message_entries: {
+        Row: {
+          id: string
+          conversation_id: string
+          sender_id: string
+          body: string
+          read_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          conversation_id: string
+          sender_id: string
+          body: string
+          read_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          read_at?: string | null
+        }
+        Relationships: []
       }
       admin_settings: {
         Row: {
@@ -298,7 +360,16 @@ export type Database = {
           value?: Record<string, any> | null
           updated_at?: string
         }
+        Relationships: []
       }
     }
+    Views: Record<string, never>
+    Functions: Record<string, never>
+    Enums: {
+      user_role: 'student' | 'company' | 'admin' | 'guest'
+      application_status: 'pending' | 'reviewing' | 'accepted' | 'rejected' | 'offer_extended'
+      job_status: 'open' | 'closed' | 'filled'
+    }
+    CompositeTypes: Record<string, never>
   }
 }

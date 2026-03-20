@@ -74,6 +74,38 @@ export default function StudentDashboard() {
     router.push('/')
   }
 
+  const handleOpenConversation = async (applicationId: string) => {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      const token = session?.access_token
+      if (!token) {
+        router.push('/auth/login')
+        return
+      }
+
+      const response = await fetch('/api/messages/conversations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ applicationId }),
+      })
+
+      if (!response.ok) {
+        return
+      }
+
+      const conversation = await response.json()
+      router.push(`/messages?conversationId=${conversation.id}`)
+    } catch (error) {
+      console.error('Error opening conversation:', error)
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -123,6 +155,16 @@ export default function StudentDashboard() {
                 </div>
                 <div className="text-xs text-muted-foreground">
                   Applied: {new Date(app.created_at).toLocaleDateString()}
+                </div>
+                <div className="mt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full"
+                    onClick={() => void handleOpenConversation(app.id)}
+                  >
+                    Open Messages
+                  </Button>
                 </div>
               </Card>
             ))
