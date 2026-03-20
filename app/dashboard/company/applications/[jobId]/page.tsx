@@ -8,6 +8,7 @@ import { Navbar } from '@/components/navbar'
 import { StatusBadge } from '@/components/status-badge'
 import { BackButton } from '@/components/back-button'
 import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import {
   Select,
@@ -18,8 +19,6 @@ import {
 } from '@/components/ui/select'
 import { DashboardStatCard } from '@/components/dashboard-stat-card'
 import { FilterPanel } from '@/components/filter-panel'
-import { Button } from '@/components/ui/button'
-import { MessageComposer } from '@/components/message-composer'
 import { APPLICATION_STATUS_OPTIONS, normalizeApplicationStatus } from '@/lib/recruitment'
 
 type Application = {
@@ -115,9 +114,11 @@ export default function ApplicationsPage() {
           .eq('id', jobId)
           .single()
 
-        if (jobData) {
-          setJob(jobData)
-          if (jobData.companies.admin_id !== user.id) {
+        const jobRecord = jobData as any
+
+        if (jobRecord) {
+          setJob(jobRecord)
+          if (jobRecord.companies.admin_id !== user.id) {
             router.push('/dashboard/company')
             return
           }
@@ -220,6 +221,37 @@ export default function ApplicationsPage() {
   const hasActiveFilters =
     searchQuery.trim().length > 0 || statusFilter !== 'all' || sortBy !== 'newest'
 
+  const handleOpenConversation = async (applicationId: string) => {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      const token = session?.access_token
+      if (!token) {
+        router.push('/auth/login')
+        return
+      }
+
+      const response = await fetch('/api/messages/conversations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ applicationId }),
+      })
+
+      if (!response.ok) {
+        return
+      }
+
+      const conversation = await response.json()
+      router.push(`/messages?conversationId=${conversation.id}`)
+    } catch (error) {
+      console.error('Error opening conversation:', error)
+    }
+  }
   if (loading) {
     return (
       <div className="ambient-page min-h-screen bg-background">
@@ -448,14 +480,14 @@ export default function ApplicationsPage() {
                   </div>
 
                   <div className="mt-5 flex flex-wrap gap-2">
-                    {candidate?.id ? (
-                      <MessageComposer
-                        applicationId={application.id}
-                        recipientId={candidate.id}
-                        recipientLabel={candidate.full_name || 'candidate'}
-                        defaultSubject={`Regarding ${job?.title || 'your application'}`}
-                      />
-                    ) : null}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="rounded-full"
+                      onClick={() => void handleOpenConversation(application.id)}
+                    >
+                      Open Messages
+                    </Button>
                     {(application.resume_url || profile?.resume_url) ? (
                       <a
                         href={application.resume_url || profile?.resume_url || '#'}

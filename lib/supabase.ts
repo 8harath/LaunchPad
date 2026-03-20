@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import type { Database } from '@/types/database'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -142,7 +143,10 @@ export async function createApplication(jobId: string, studentId: string, resume
 export async function updateApplicationStatus(applicationId: string, status: string) {
   const { data, error } = await supabase
     .from('applications')
-    .update({ status, updated_at: new Date().toISOString() })
+    .update({
+      status: status as Database['public']['Tables']['applications']['Row']['status'],
+      updated_at: new Date().toISOString(),
+    })
     .eq('id', applicationId)
     .select()
     .single()

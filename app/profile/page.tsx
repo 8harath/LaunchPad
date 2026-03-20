@@ -89,76 +89,82 @@ function ProfilePageContent() {
           .eq('id', user.id)
           .single()
 
-        if (baseError || !baseProfile) {
+        const baseProfileRecord = baseProfile as any
+
+        if (baseError || !baseProfileRecord) {
           setError('Unable to load your profile.')
           return
         }
 
-        setRole(baseProfile.role)
-        setUserName(baseProfile.full_name || user.email || undefined)
-        setAvatarUrl(baseProfile.avatar_url || AVATAR_PRESETS[0].url)
+        setRole(baseProfileRecord.role)
+        setUserName(baseProfileRecord.full_name || user.email || undefined)
+        setAvatarUrl(baseProfileRecord.avatar_url || AVATAR_PRESETS[0].url)
         setProfile({
-          full_name: baseProfile.full_name || '',
-          bio: baseProfile.bio || '',
-          avatar_url: baseProfile.avatar_url || AVATAR_PRESETS[0].url,
+          full_name: baseProfileRecord.full_name || '',
+          bio: baseProfileRecord.bio || '',
+          avatar_url: baseProfileRecord.avatar_url || AVATAR_PRESETS[0].url,
         })
 
-        if (baseProfile.role === 'student') {
+        if (baseProfileRecord.role === 'student') {
           const { data: studentData } = await supabase
             .from('student_profiles')
             .select('*')
             .eq('id', user.id)
             .maybeSingle()
 
-          if (studentData) {
+          const studentRecord = studentData as any
+
+          if (studentRecord) {
             setStudentProfile({
-              university: studentData.university || '',
-              major: studentData.major || '',
-              graduation_year: studentData.graduation_year ? String(studentData.graduation_year) : '',
-              headline: studentData.headline || '',
-              date_of_birth: studentData.date_of_birth || '',
-              phone: studentData.phone || '',
-              location: studentData.location || '',
-              current_title: studentData.current_title || '',
-              current_company: studentData.current_company || '',
-              years_of_experience: studentData.years_of_experience ? String(studentData.years_of_experience) : '',
-              experience_summary: studentData.experience_summary || '',
-              project_highlights: studentData.project_highlights || '',
-              certifications: (studentData.certifications || []).join(', '),
-              languages: (studentData.languages || []).join(', '),
-              availability_notice_period: studentData.availability_notice_period || '',
-              skills: (studentData.skills || []).join(', '),
-              preferred_job_types: (studentData.preferred_job_types || []).join(', '),
-              expected_salary_min: studentData.expected_salary_min ? String(studentData.expected_salary_min) : '',
-              expected_salary_max: studentData.expected_salary_max ? String(studentData.expected_salary_max) : '',
-              resume_url: studentData.resume_url || '',
-              github_url: studentData.github_url || '',
-              linkedin_url: studentData.linkedin_url || '',
-              portfolio_url: studentData.portfolio_url || '',
-              twitter_url: studentData.twitter_url || '',
-              instagram_url: studentData.instagram_url || '',
-              leetcode_url: studentData.leetcode_url || '',
-              devfolio_url: studentData.devfolio_url || '',
+              university: studentRecord.university || '',
+              major: studentRecord.major || '',
+              graduation_year: studentRecord.graduation_year ? String(studentRecord.graduation_year) : '',
+              headline: studentRecord.headline || '',
+              date_of_birth: studentRecord.date_of_birth || '',
+              phone: studentRecord.phone || '',
+              location: studentRecord.location || '',
+              current_title: studentRecord.current_title || '',
+              current_company: studentRecord.current_company || '',
+              years_of_experience: studentRecord.years_of_experience ? String(studentRecord.years_of_experience) : '',
+              experience_summary: studentRecord.experience_summary || '',
+              project_highlights: studentRecord.project_highlights || '',
+              certifications: (studentRecord.certifications || []).join(', '),
+              languages: (studentRecord.languages || []).join(', '),
+              availability_notice_period: studentRecord.availability_notice_period || '',
+              skills: (studentRecord.skills || []).join(', '),
+              preferred_job_types: (studentRecord.preferred_job_types || []).join(', '),
+              expected_salary_min: studentRecord.expected_salary_min ? String(studentRecord.expected_salary_min) : '',
+              expected_salary_max: studentRecord.expected_salary_max ? String(studentRecord.expected_salary_max) : '',
+              resume_url: studentRecord.resume_url || '',
+              github_url: studentRecord.github_url || '',
+              linkedin_url: studentRecord.linkedin_url || '',
+              portfolio_url: studentRecord.portfolio_url || '',
+              twitter_url: studentRecord.twitter_url || '',
+              instagram_url: studentRecord.instagram_url || '',
+              leetcode_url: studentRecord.leetcode_url || '',
+              devfolio_url: studentRecord.devfolio_url || '',
             })
           }
         }
 
-        if (baseProfile.role === 'company' || baseProfile.role === 'admin') {
+        if (baseProfileRecord.role === 'company' || baseProfileRecord.role === 'admin') {
           const { data: companyData } = await supabase
             .from('companies')
             .select('*')
             .eq('admin_id', user.id)
             .maybeSingle()
 
-          if (companyData) {
+          const companyRecord = companyData as any
+
+          if (companyRecord) {
             setCompanyProfile({
-              name: companyData.name || '',
-              industry: companyData.industry || '',
-              location: companyData.location || '',
-              website: companyData.website || '',
-              size: companyData.size || '',
-              description: companyData.description || '',
-              logo_url: companyData.logo_url || '',
+              name: companyRecord.name || '',
+              industry: companyRecord.industry || '',
+              location: companyRecord.location || '',
+              website: companyRecord.website || '',
+              size: companyRecord.size || '',
+              description: companyRecord.description || '',
+              logo_url: companyRecord.logo_url || '',
             })
           }
         }
@@ -256,8 +262,10 @@ function ProfilePageContent() {
           updated_at: new Date().toISOString(),
         }
 
-        const companyQuery = existingCompany?.id
-          ? supabase.from('companies').update(companyPayload).eq('id', existingCompany.id)
+        const existingCompanyRecord = existingCompany as { id?: string } | null
+
+        const companyQuery = existingCompanyRecord?.id
+          ? supabase.from('companies').update(companyPayload).eq('id', existingCompanyRecord.id)
           : supabase.from('companies').insert(companyPayload)
 
         const { error: companyError } = await companyQuery

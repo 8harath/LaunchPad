@@ -1,79 +1,127 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuthorizedUser, serverSupabase } from '@/lib/server-supabase'
+import { getAuthenticatedUser, supabaseAdmin } from '@/lib/server-supabase'
 
-type MessageRequestBody = {
-  recipientId: string
-  applicationId: string
-  subject?: string
+type SendMessageRequest = {
+  conversationId: string
   body: string
+}
+
+async function getConversationForUser(conversationId: string, userId: string) {
+  const { data: conversation, error } = await supabaseAdmin
+    .from('message_conversations')
+    .select(
+      `
+      id,
+      application_id,
+      student_id,
+      company_id,
+      company_admin_id,
+      last_message_at,
+      created_at,
+      updated_at,
+      applications:application_id (
+        id,
+        status,
+        job_id,
+        jobs:job_id (
+          id,
+          title
+        )
+      ),
+      student_profile:student_id (
+        id,
+        profiles:id (
+          id,
+          full_name,
+          email,
+          avatar_url
+        )
+      ),
+      company:company_id (
+        id,
+        name,
+        logo_url
+      )
+      `
+    )
+    .eq('id', conversationId)
+    .single()
+
+  if (error || !conversation) {
+    return null
+  }
+
+  if (conversation.student_id !== userId && conversation.company_admin_id !== userId) {
+    return null
+  }
+
+  return conversation
 }
 
 export async function GET(request: NextRequest) {
   try {
-    const { user, error: authError } = await getAuthorizedUser(request)
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const auth = await getAuthenticatedUser(request)
+    if (!auth.user) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
-    const applicationId = request.nextUrl.searchParams.get('applicationId')
+    const { searchParams } = request.nextUrl
+    const conversationId = searchParams.get('conversationId')
+    const before = searchParams.get('before')
+    const limitParam = Number(searchParams.get('limit') || 50)
+    const limit = Number.isFinite(limitParam)
+      ? Math.min(Math.max(limitParam, 1), 100)
+      : 50
 
-    let query = serverSupabase
-      .from('messages')
-      .select('*')
-      .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
+    if (!conversationId) {
+      return NextResponse.json(
+        { error: 'conversationId is required' },
+        { status: 400 }
+      )
+    }
+
+    const conversation = await getConversationForUser(conversationId, auth.user.id)
+    if (!conversation) {
+      return NextResponse.json({ error: 'Conversation not found' }, { status: 404 })
+    }
+
+    let query = supabaseAdmin
+      .from('message_entries')
+      .select(
+        `
+        id,
+        conversation_id,
+        sender_id,
+        body,
+        created_at,
+        read_at,
+        sender:sender_id (
+          id,
+          full_name,
+          email,
+          avatar_url,
+          role
+        )
+        `
+      )
+      .eq('conversation_id', conversationId)
       .order('created_at', { ascending: false })
-      .limit(100)
+      .limit(limit)
 
-    if (applicationId) {
-      query = query.eq('application_id', applicationId)
+    if (before) {
+      query = query.lt('created_at', before)
     }
 
-    const { data, error } = await query
+    const { data: messages, error } = await query
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
-    if (!data?.length) {
-      return NextResponse.json({ messages: [] })
-    }
-
-    const profileIds = [...new Set(data.flatMap((message) => [message.sender_id, message.recipient_id]))]
-
-    const { data: profiles, error: profilesError } = await serverSupabase
-      .from('profiles')
-      .select('id, full_name, email')
-      .in('id', profileIds)
-
-    if (profilesError) {
-      return NextResponse.json({ error: profilesError.message }, { status: 400 })
-    }
-
-    const profilesById = new Map((profiles || []).map((profile) => [profile.id, profile]))
-
-    const messages = data
-      .slice()
-      .reverse()
-      .map((message) => ({
-        ...message,
-        sender: profilesById.get(message.sender_id)
-          ? {
-              id: message.sender_id,
-              full_name: profilesById.get(message.sender_id)?.full_name,
-              email: profilesById.get(message.sender_id)?.email,
-            }
-          : null,
-        recipient: profilesById.get(message.recipient_id)
-          ? {
-              id: message.recipient_id,
-              full_name: profilesById.get(message.recipient_id)?.full_name,
-              email: profilesById.get(message.recipient_id)?.email,
-            }
-          : null,
-      }))
-
-    return NextResponse.json({ messages })
+    return NextResponse.json({
+      conversation,
+      messages: (messages || []).reverse(),
+    })
   } catch (error) {
     console.error('Error fetching messages:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -82,127 +130,96 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { user, error: authError } = await getAuthorizedUser(request)
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const auth = await getAuthenticatedUser(request)
+    if (!auth.user) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status })
     }
 
-    const body = (await request.json()) as MessageRequestBody
+    const body: SendMessageRequest = await request.json()
+    const trimmedBody = body.body?.trim()
 
-    if (!body.recipientId || !body.applicationId || !body.body?.trim()) {
+    if (!body.conversationId || !trimmedBody) {
       return NextResponse.json(
-        { error: 'Recipient, application, and message body are required.' },
+        { error: 'conversationId and body are required' },
         { status: 400 }
       )
     }
 
-    const { data: application, error: applicationError } = await serverSupabase
-      .from('applications')
-      .select('id, student_id, job_id')
-      .eq('id', body.applicationId)
-      .single()
-
-    if (applicationError || !application) {
-      return NextResponse.json({ error: 'Application not found.' }, { status: 404 })
+    if (trimmedBody.length > 4000) {
+      return NextResponse.json(
+        { error: 'Message body must be 4000 characters or less' },
+        { status: 400 }
+      )
     }
 
-    const { data: job, error: jobError } = await serverSupabase
-      .from('jobs')
-      .select('id, title, company_id')
-      .eq('id', application.job_id)
-      .single()
-
-    if (jobError || !job) {
-      return NextResponse.json({ error: 'Related job not found.' }, { status: 404 })
+    const conversation = await getConversationForUser(body.conversationId, auth.user.id)
+    if (!conversation) {
+      return NextResponse.json({ error: 'Conversation not found' }, { status: 404 })
     }
 
-    const { data: company, error: companyError } = await serverSupabase
-      .from('companies')
-      .select('admin_id, name')
-      .eq('id', job.company_id)
-      .single()
+    const applicationRelation = Array.isArray(conversation.applications)
+      ? conversation.applications[0]
+      : conversation.applications
+    const jobRelation = Array.isArray(applicationRelation?.jobs)
+      ? applicationRelation.jobs[0]
+      : applicationRelation?.jobs
 
-    if (companyError || !company) {
-      return NextResponse.json({ error: 'Related company not found.' }, { status: 404 })
-    }
+    const recipientId =
+      conversation.student_id === auth.user.id
+        ? conversation.company_admin_id
+        : conversation.student_id
 
-    const studentId = application.student_id
-    const recruiterId = company.admin_id
-    const isAuthorizedParticipant =
-      [studentId, recruiterId].includes(user.id) &&
-      [studentId, recruiterId].includes(body.recipientId)
-
-    if (!isAuthorizedParticipant) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
-
-    const { data, error } = await serverSupabase
-      .from('messages')
+    const { data: message, error } = await supabaseAdmin
+      .from('message_entries')
       .insert([
         {
-          sender_id: user.id,
-          recipient_id: body.recipientId,
-          application_id: body.applicationId,
-          job_id: application.job_id,
-          subject: body.subject?.trim() || null,
-          body: body.body.trim(),
-          read: false,
+          conversation_id: body.conversationId,
+          sender_id: auth.user.id,
+          body: trimmedBody,
         },
       ])
-      .select('*')
+      .select(
+        `
+        id,
+        conversation_id,
+        sender_id,
+        body,
+        created_at,
+        read_at
+        `
+      )
       .single()
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 })
+    if (error || !message) {
+      return NextResponse.json(
+        { error: error?.message || 'Unable to send message' },
+        { status: 400 }
+      )
     }
 
-    await serverSupabase.from('notifications').insert([
-      {
-        user_id: body.recipientId,
-        title: 'New message',
-        message: body.subject?.trim() || `You have a new conversation update for ${job.title}.`,
-        type: 'message',
-        entity_id: data.id,
-        action_url: `/messages?applicationId=${body.applicationId}`,
-      },
+    await Promise.all([
+      supabaseAdmin
+        .from('message_conversations')
+        .update({
+          last_message_at: message.created_at,
+          updated_at: message.created_at,
+        })
+        .eq('id', body.conversationId),
+      supabaseAdmin.from('notifications').insert([
+        {
+          user_id: recipientId,
+          title: 'New Message',
+          message: `You have a new message about ${jobRelation?.title || 'your application'}`,
+          type: 'new_message',
+          entity_id: body.conversationId,
+          action_url: `/messages?conversationId=${body.conversationId}`,
+        },
+      ]),
     ])
 
-    return NextResponse.json(data, { status: 201 })
+    return NextResponse.json(message, { status: 201 })
   } catch (error) {
-    console.error('Error creating message:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
-}
-
-export async function PATCH(request: NextRequest) {
-  try {
-    const { user, error: authError } = await getAuthorizedUser(request)
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const body = (await request.json()) as { messageIds: string[] }
-    const messageIds = body.messageIds || []
-
-    if (!messageIds.length) {
-      return NextResponse.json({ error: 'No messages provided.' }, { status: 400 })
-    }
-
-    const { error } = await serverSupabase
-      .from('messages')
-      .update({ read: true, updated_at: new Date().toISOString() })
-      .eq('recipient_id', user.id)
-      .in('id', messageIds)
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 })
-    }
-
-    return NextResponse.json({ success: true })
-  } catch (error) {
-    console.error('Error updating messages:', error)
+    console.error('Error sending message:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

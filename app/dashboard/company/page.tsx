@@ -12,7 +12,7 @@ import {
   Users,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { InboxPreview } from '@/components/inbox-preview'
+import { InboxPreview, type InboxMessagePreview } from '@/components/inbox-preview'
 import { MessageComposer } from '@/components/message-composer'
 import { Navbar } from '@/components/navbar'
 import { StatusBadge } from '@/components/status-badge'
@@ -65,12 +65,20 @@ const JOB_SORT_OPTIONS = [
   { value: 'applications', label: 'Most applicants' },
 ]
 
+function asObject<T>(value: T | T[] | null | undefined): T | null {
+  if (!value) {
+    return null
+  }
+
+  return Array.isArray(value) ? value[0] || null : value
+}
+
 export default function CompanyDashboard() {
   const router = useRouter()
   const [jobs, setJobs] = useState<Job[]>([])
   const [company, setCompany] = useState<any>(null)
   const [recentApplicants, setRecentApplicants] = useState<ApplicantPreview[]>([])
-  const [messages, setMessages] = useState<any[]>([])
+  const [messages, setMessages] = useState<InboxMessagePreview[]>([])
   const [loading, setLoading] = useState(true)
   const [userName, setUserName] = useState<string | undefined>()
   const [searchQuery, setSearchQuery] = useState('')
@@ -107,16 +115,18 @@ export default function CompanyDashboard() {
           .eq('admin_id', authUser.id)
           .single()
 
-        if (!companyData) {
+        const companyRecord = companyData as any
+
+        if (!companyRecord) {
           setLoading(false)
           return
         }
 
-        setCompany(companyData)
+        setCompany(companyRecord)
 
         const [jobsResponse, messagesResponse] = await Promise.all([
-          fetch(`/api/jobs?companyId=${companyData.id}`),
-          fetch('/api/messages', {
+          fetch(`/api/jobs?companyId=${companyRecord.id}`),
+          fetch('/api/messages/conversations', {
             headers: { Authorization: `Bearer ${session?.access_token || ''}` },
           }),
         ])
@@ -130,7 +140,28 @@ export default function CompanyDashboard() {
 
         if (messagesResponse.ok) {
           const payload = await messagesResponse.json()
-          setMessages(payload.messages || [])
+          const previews = ((payload.conversations || []) as any[]).slice(0, 4).map((conversation) => {
+            const application = asObject(conversation.applications)
+            const job = asObject(application?.jobs)
+            const studentProfile = asObject(conversation.student_profile)
+            const student = asObject(studentProfile?.profiles)
+            const lastMessage = asObject(conversation.last_message)
+            const sender = asObject(lastMessage?.sender)
+            const counterpartName = student?.full_name || 'Candidate'
+            const isMine = sender?.id === authUser.id
+
+            return {
+              id: conversation.id,
+              senderName: isMine ? 'You' : counterpartName,
+              recipientName: isMine ? counterpartName : 'You',
+              subject: job?.title || 'Application conversation',
+              body: lastMessage?.body || `Open the conversation about ${job?.title || 'this application'}.`,
+              createdAt: lastMessage?.created_at || conversation.last_message_at || conversation.updated_at,
+              read: (conversation.unread_count || 0) === 0,
+            }
+          })
+
+          setMessages(previews)
         }
 
         const applicantResponses = await Promise.all(
@@ -239,18 +270,7 @@ export default function CompanyDashboard() {
     ).length
     return accumulator
   }, {})
-  const recentMessages = messages
-    .slice(-4)
-    .reverse()
-    .map((message) => ({
-      id: message.id,
-      senderName: message.sender?.full_name || message.sender?.email || 'Unknown sender',
-      recipientName: message.recipient?.full_name || message.recipient?.email || 'Unknown recipient',
-      subject: message.subject,
-      body: message.body,
-      createdAt: message.created_at,
-      read: message.read,
-    }))
+  const recentMessages = messages.slice(0, 4)
   const hasActiveFilters =
     searchQuery.trim().length > 0 || statusFilter !== 'all' || sortBy !== 'newest'
 
