@@ -107,15 +107,17 @@ export default function CompanyDashboard() {
           .eq('admin_id', authUser.id)
           .single()
 
-        if (!companyData) {
+        const companyRecord = companyData as any
+
+        if (!companyRecord) {
           setLoading(false)
           return
         }
 
-        setCompany(companyData)
+        setCompany(companyRecord)
 
         const [jobsResponse, messagesResponse] = await Promise.all([
-          fetch(`/api/jobs?companyId=${companyData.id}`),
+          fetch(`/api/jobs?companyId=${companyRecord.id}`),
           fetch('/api/messages', {
             headers: { Authorization: `Bearer ${session?.access_token || ''}` },
           }),
