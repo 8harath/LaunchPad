@@ -211,6 +211,8 @@ export async function POST(request: NextRequest) {
           title: 'New Message',
           message: `You have a new message about ${jobRelation?.title || 'your application'}`,
           type: 'new_message',
+          entity_id: body.conversationId,
+          action_url: `/messages?conversationId=${body.conversationId}`,
         },
       ]),
     ])

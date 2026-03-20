@@ -56,7 +56,61 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
-    return NextResponse.json({ conversations: data || [] })
+    const conversations = data || []
+
+    if (!conversations.length) {
+      return NextResponse.json({ conversations: [] })
+    }
+
+    const conversationIds = conversations.map((conversation) => conversation.id)
+
+    const { data: messageEntries, error: messageError } = await supabaseAdmin
+      .from('message_entries')
+      .select(
+        `
+        id,
+        conversation_id,
+        sender_id,
+        body,
+        created_at,
+        read_at,
+        sender:sender_id (
+          id,
+          full_name,
+          email
+        )
+        `
+      )
+      .in('conversation_id', conversationIds)
+      .order('created_at', { ascending: false })
+
+    if (messageError) {
+      return NextResponse.json({ error: messageError.message }, { status: 400 })
+    }
+
+    const latestMessageByConversation = new Map<string, any>()
+    const unreadCountByConversation = new Map<string, number>()
+
+    for (const entry of messageEntries || []) {
+      if (!latestMessageByConversation.has(entry.conversation_id)) {
+        latestMessageByConversation.set(entry.conversation_id, entry)
+      }
+
+      if (entry.sender_id !== auth.user.id && !entry.read_at) {
+        unreadCountByConversation.set(
+          entry.conversation_id,
+          (unreadCountByConversation.get(entry.conversation_id) || 0) + 1
+        )
+      }
+    }
+
+    return NextResponse.json({
+      conversations: conversations.map((conversation) => ({
+        ...conversation,
+        last_message: latestMessageByConversation.get(conversation.id) || null,
+        unread_count: unreadCountByConversation.get(conversation.id) || 0,
+      })),
+    })
   } catch (error) {
     console.error('Error fetching conversations:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
