@@ -28,8 +28,9 @@ export function useNotifications(userId: string | undefined) {
         .limit(20)
 
       if (!error && data) {
-        setNotifications(data)
-        setUnreadCount(data.filter(n => !n.read).length)
+        const typedNotifications = data as Notification[]
+        setNotifications(typedNotifications)
+        setUnreadCount(typedNotifications.filter(n => !n.read).length)
       }
     }
 
