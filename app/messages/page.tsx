@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { MessageSquareText, RefreshCcw, SendHorizonal } from 'lucide-react'
@@ -77,7 +77,7 @@ function normalizeMessage(item: any): Message {
   }
 }
 
-export default function MessagesPage() {
+function MessagesPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const bottomRef = useRef<HTMLDivElement | null>(null)
@@ -543,5 +543,22 @@ export default function MessagesPage() {
         </div>
       </main>
     </div>
+  )
+}
+
+export default function MessagesPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background">
+          <Navbar />
+          <div className="flex items-center justify-center py-16">
+            <Spinner />
+          </div>
+        </div>
+      }
+    >
+      <MessagesPageContent />
+    </Suspense>
   )
 }
