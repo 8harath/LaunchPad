@@ -254,6 +254,37 @@ export default function StudentDashboard() {
   const hasActiveFilters =
     searchQuery.trim().length > 0 || statusFilter !== 'all' || sortBy !== 'newest'
 
+  const handleOpenConversation = async (applicationId: string) => {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      const token = session?.access_token
+      if (!token) {
+        router.push('/auth/login')
+        return
+      }
+
+      const response = await fetch('/api/messages/conversations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ applicationId }),
+      })
+
+      if (!response.ok) {
+        return
+      }
+
+      const conversation = await response.json()
+      router.push(`/messages?conversationId=${conversation.id}`)
+    } catch (error) {
+      console.error('Error opening conversation:', error)
+    }
+  }
   if (loading) {
     return (
       <div className="ambient-page min-h-screen bg-background">
@@ -503,6 +534,16 @@ export default function StudentDashboard() {
                       defaultSubject={`Regarding ${application.jobs.title}`}
                     />
                   ) : null}
+                </div>
+                <div className="mt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full"
+                    onClick={() => void handleOpenConversation(application.id)}
+                  >
+                    Open Messages
+                  </Button>
                 </div>
               </Card>
             ))
