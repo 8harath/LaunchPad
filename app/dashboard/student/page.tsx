@@ -15,7 +15,7 @@ import {
 import { supabase } from '@/lib/supabase'
 import { ApplicationProgress } from '@/components/application-progress'
 import { CareerInsightsBoard } from '@/components/career-insights-board'
-import { InboxPreview } from '@/components/inbox-preview'
+import { InboxPreview, type InboxMessagePreview } from '@/components/inbox-preview'
 import { MessageComposer } from '@/components/message-composer'
 import { Navbar } from '@/components/navbar'
 import { StatusBadge } from '@/components/status-badge'
@@ -78,6 +78,14 @@ type CommunityPayload = {
   insights: any[]
 }
 
+function asObject<T>(value: T | T[] | null | undefined): T | null {
+  if (!value) {
+    return null
+  }
+
+  return Array.isArray(value) ? value[0] || null : value
+}
+
 const STATUS_FILTERS = [{ value: 'all', label: 'All activity' }, ...APPLICATION_STATUS_OPTIONS.map((option) => ({ value: option.value, label: option.label }))]
 
 const SORT_OPTIONS = [
@@ -91,7 +99,7 @@ export default function StudentDashboard() {
   const router = useRouter()
   const [applications, setApplications] = useState<Application[]>([])
   const [matchedJobs, setMatchedJobs] = useState<JobMatch[]>([])
-  const [messages, setMessages] = useState<any[]>([])
+  const [messages, setMessages] = useState<InboxMessagePreview[]>([])
   const [community, setCommunity] = useState<CommunityPayload>({ reviews: [], stories: [], insights: [] })
   const [loading, setLoading] = useState(true)
   const [userName, setUserName] = useState<string | undefined>()
@@ -121,7 +129,7 @@ export default function StudentDashboard() {
             headers: { Authorization: `Bearer ${session?.access_token || ''}` },
           }),
           fetch('/api/jobs'),
-          fetch('/api/messages', {
+          fetch('/api/messages/conversations', {
             headers: { Authorization: `Bearer ${session?.access_token || ''}` },
           }),
           fetch('/api/community'),
@@ -160,7 +168,27 @@ export default function StudentDashboard() {
 
         if (messagesResponse.ok) {
           const payload = await messagesResponse.json()
-          setMessages(payload.messages || [])
+          const previews = ((payload.conversations || []) as any[]).slice(0, 4).map((conversation) => {
+            const application = asObject(conversation.applications)
+            const job = asObject(application?.jobs)
+            const company = asObject(conversation.company)
+            const lastMessage = asObject(conversation.last_message)
+            const sender = asObject(lastMessage?.sender)
+            const counterpartName = company?.name || 'Company'
+            const isMine = sender?.id === authUser.id
+
+            return {
+              id: conversation.id,
+              senderName: isMine ? 'You' : counterpartName,
+              recipientName: isMine ? counterpartName : 'You',
+              subject: job?.title || 'Application conversation',
+              body: lastMessage?.body || `Open the conversation about ${job?.title || 'your application'}.`,
+              createdAt: lastMessage?.created_at || conversation.last_message_at || conversation.updated_at,
+              read: (conversation.unread_count || 0) === 0,
+            }
+          })
+
+          setMessages(previews)
         }
 
         if (communityResponse.ok) {
@@ -239,52 +267,10 @@ export default function StudentDashboard() {
   const completedApplications = applications.filter((application) =>
     ['accepted', 'rejected'].includes(normalizeApplicationStatus(application.status))
   ).length
-  const recentMessages = messages
-    .slice(-4)
-    .reverse()
-    .map((message) => ({
-      id: message.id,
-      senderName: message.sender?.full_name || message.sender?.email || 'Unknown sender',
-      recipientName: message.recipient?.full_name || message.recipient?.email || 'Unknown recipient',
-      subject: message.subject,
-      body: message.body,
-      createdAt: message.created_at,
-      read: message.read,
-    }))
+  const recentMessages = messages.slice(0, 4)
   const hasActiveFilters =
     searchQuery.trim().length > 0 || statusFilter !== 'all' || sortBy !== 'newest'
 
-  const handleOpenConversation = async (applicationId: string) => {
-    try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-
-      const token = session?.access_token
-      if (!token) {
-        router.push('/auth/login')
-        return
-      }
-
-      const response = await fetch('/api/messages/conversations', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ applicationId }),
-      })
-
-      if (!response.ok) {
-        return
-      }
-
-      const conversation = await response.json()
-      router.push(`/messages?conversationId=${conversation.id}`)
-    } catch (error) {
-      console.error('Error opening conversation:', error)
-    }
-  }
   if (loading) {
     return (
       <div className="ambient-page min-h-screen bg-background">
@@ -532,18 +518,9 @@ export default function StudentDashboard() {
                       recipientId={application.jobs.companies.admin_id}
                       recipientLabel={application.jobs.companies.name}
                       defaultSubject={`Regarding ${application.jobs.title}`}
+                      buttonLabel="Open Messages"
                     />
                   ) : null}
-                </div>
-                <div className="mt-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="rounded-full"
-                    onClick={() => void handleOpenConversation(application.id)}
-                  >
-                    Open Messages
-                  </Button>
                 </div>
               </Card>
             ))
