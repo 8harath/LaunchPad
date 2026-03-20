@@ -54,11 +54,13 @@ export default function CompanyDashboard() {
           .eq('admin_id', authUser.id)
           .single()
 
-        if (companyData) {
-          setCompany(companyData)
+        const companyRecord = companyData as any
+
+        if (companyRecord) {
+          setCompany(companyRecord)
 
           // Fetch jobs
-          const response = await fetch(`/api/jobs?companyId=${companyData.id}`)
+          const response = await fetch(`/api/jobs?companyId=${companyRecord.id}`)
           if (response.ok) {
             const { jobs } = await response.json()
             setJobs(jobs || [])
