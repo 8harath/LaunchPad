@@ -9,6 +9,7 @@ import {
   Compass,
   FileStack,
   Sparkles,
+  Target,
   TrendingUp,
   UserCircle2,
 } from 'lucide-react'
@@ -328,7 +329,7 @@ export default function StudentDashboard() {
                 The next workflows most students need right away.
               </p>
             </div>
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               <ActionCard
                 href="/browse"
                 icon={Compass}
@@ -342,6 +343,13 @@ export default function StudentDashboard() {
                 eyebrow="Profile"
                 title="Strengthen your profile"
                 description="Keep skills, resume links, projects, and experience recruiter-ready."
+              />
+              <ActionCard
+                href="/career-guide"
+                icon={Target}
+                eyebrow="AI Guide"
+                title="Map your next role"
+                description="See role recommendations, skill gaps, and a learning path from your current profile."
               />
               <ActionCard
                 href="/community"
@@ -362,6 +370,26 @@ export default function StudentDashboard() {
         </div>
 
         <div className="mb-8">
+          <Card className="mb-6 rounded-[1.75rem] border border-border/80 p-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Career guide</p>
+                <h2 className="mt-2 text-xl font-semibold text-foreground">
+                  Want more than simple skill overlap?
+                </h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+                  Generate a fuller recommendation set with role paths, live job matches, skill gaps, learning resources, and resume feedback.
+                </p>
+              </div>
+              <Button asChild className="rounded-full">
+                <Link href="/career-guide">
+                  Open career guide
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </Card>
+
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
               <h2 className="text-xl font-semibold text-foreground">Matched jobs</h2>

@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -325,9 +326,16 @@ function ProfilePageContent() {
                 Keep it clean, current, and easy to scan. Your details are stored in Supabase and can be updated anytime.
               </p>
             </div>
-            <Button onClick={handleSave} disabled={saving} className="rounded-full px-6">
-              {saving ? 'Saving...' : 'Save profile'}
-            </Button>
+            <div className="flex flex-wrap gap-3">
+              {role === 'student' ? (
+                <Button variant="outline" asChild className="rounded-full px-6">
+                  <Link href="/career-guide">Open career guide</Link>
+                </Button>
+              ) : null}
+              <Button onClick={handleSave} disabled={saving} className="rounded-full px-6">
+                {saving ? 'Saving...' : 'Save profile'}
+              </Button>
+            </div>
           </div>
         </div>
 
